@@ -55,6 +55,9 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                        <arguments>
+                         <!--<argument>-spring.profiles.active=dev</argument>-->
+                        </arguments>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
