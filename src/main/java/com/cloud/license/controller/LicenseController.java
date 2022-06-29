@@ -4,15 +4,18 @@ import com.cloud.license.model.License;
 import com.cloud.license.service.LicenseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.*;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * LicenseController.
@@ -30,11 +33,25 @@ public class LicenseController {
         this.licenseService = licenseService;
     }
 
-    @GetMapping(value = "/{licenseId}")
+    @RequestMapping(value = "/{licenseId}", method = RequestMethod.GET)
     public ResponseEntity<License> getLicense(
             @PathVariable("organizationId") String organizationId,
-            @PathVariable("licenseId") String licenseId) {
+            @PathVariable("licenseId") String licenseId
+    ) {
         License license = licenseService.getLicense(licenseId, organizationId);
+        //вспомогательный класс, предназначенный для создания ссылок на классы контроллеров
+        license.add(linkTo(methodOn(LicenseController.class)
+                        .getLicense(organizationId, license.getLicenseId()))
+                        .withSelfRel(),//
+                linkTo(methodOn(LicenseController.class)
+                        .createLicense(organizationId, license, null))
+                        .withRel("createLicense"),//
+                linkTo(methodOn(LicenseController.class)
+                        .updateLicense(organizationId, license, null))
+                        .withRel("updateLicense"),
+                linkTo(methodOn(LicenseController.class)
+                        .deleteLicense(organizationId, license.getLicenseId()))
+                        .withRel("deleteLicense"));
         return ResponseEntity.ok(license);
     }
 
