@@ -1,11 +1,11 @@
-# шаг 1
+# шаг 1 create image:goal create and unpack file .jar
 # Базовый образ, содержащий среду Java времени выполнения
 FROM openjdk:17.0.2-jdk as build
 # Добавить информацию о владельце
 LABEL maintainer="Illary Huaylupo <illaryhs@gmail.com>"
-# Файл jar приложения
+# Файл jar приложения invoke from pom.xml
 ARG JAR_FILE
-# Добавить файл jar приложения в контейнер
+# Добавить файл jar приложения в контейнер(image)
 COPY ${JAR_FILE} app.jar
 # распаковать файл jar
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf /app.jar)
