@@ -64,6 +64,9 @@
                     <image>
                         <name>${docker.image.prefix}/${project.artifactId}:latest</name>
                     </image>
+                    <layers>
+                        <enabled>true</enabled>
+                    </layers>
                     <arguments>
                         <!--<argument>-spring.profiles.active=dev</argument>-->
                     </arguments>
