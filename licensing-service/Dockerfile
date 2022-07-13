@@ -2,7 +2,7 @@
 # Базовый образ, содержащий среду Java времени выполнения
 # FROM openjdk:17.0.2-jdk as build
 # Добавить информацию о владельце
-# LABEL maintainer="Illary Huaylupo <illaryhs@gmail.com>"
+# LABEL maintainer="Illary Huaylupo <my@gmail.com>"
 # Файл jar приложения invoke from pom.xml
 #ARG JAR_FILE
 # Добавить файл jar приложения в контейнер(image)
