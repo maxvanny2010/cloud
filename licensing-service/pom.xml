@@ -33,6 +33,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <!--don work for exlude hikaru  for cloude server config connect <scope>provided</scope> -->
         </dependency>
         <!--postgres-->
         <dependency>

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: config-server
+    name: configserver
   profiles:
     active: native
   cloud:
@@ -8,8 +8,9 @@ spring:
       server:
         native:
           search-locations: classpath:/config
+        bootstrap: true
 server:
-  port: 8071
+  port: 8888
 
 management:
   endpoints:
