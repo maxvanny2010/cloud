@@ -26,7 +26,7 @@ public class LicenseService {
                 .licenseId(licenseId)
                 .organizationId(organizationId)
                 .description("Software product")
-                .productName("Ostock")
+                .productName("cloud")
                 .licenseType("full")
                 .build();
     }
