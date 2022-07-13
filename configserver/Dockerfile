@@ -1,6 +1,6 @@
 #server dockerfile use path  to main class
 FROM openjdk:17.0.2-jdk as build
-ARG JAR_FILE
+ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf /app.jar)
 FROM openjdk:17.0.2-jdk
