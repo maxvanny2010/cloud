@@ -1,3 +1,4 @@
+#server dockerfile use path  to main class
 FROM openjdk:17.0.2-jdk as build
 ARG JAR_FILE
 COPY ${JAR_FILE} app.jar
