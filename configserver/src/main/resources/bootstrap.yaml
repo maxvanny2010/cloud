@@ -10,7 +10,7 @@ spring:
           search-locations: classpath:/config
         bootstrap: true
 server:
-  port: 8888
+  port: 8071
 
 management:
   endpoints:
