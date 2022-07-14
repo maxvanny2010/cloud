@@ -1,0 +1,28 @@
+#change path from /actuator/health to /health
+management:
+  endpoints:
+    web:
+      base-path: /
+    enabled-by-default: false
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: license
+  cloud:
+    config:
+      enabled: true
+      profile: dev
+  config:
+    import: optional:configserver:http://host.docker.internal:8071
