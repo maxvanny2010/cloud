@@ -1,6 +1,8 @@
 package com.cloud.license.service;
 
+import com.cloud.license.config.ServiceConfig;
 import com.cloud.license.model.License;
+import com.cloud.license.repository.LicenseRepository;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -15,51 +17,48 @@ import java.util.*;
 @Service
 public class LicenseService {
     private final MessageSource messages;
+    private final LicenseRepository licenseRepository;
+    private final ServiceConfig config;
 
-    public LicenseService(final MessageSource messages) {
+
+    public LicenseService(final MessageSource messages,
+                          final LicenseRepository licenseRepository,
+                          final ServiceConfig config) {
         this.messages = messages;
+        this.licenseRepository = licenseRepository;
+        this.config = config;
     }
+
 
     public License getLicense(String licenseId, String organizationId) {
-        return License.builder()
-                .id(new Random().nextInt(1000))
-                .licenseId(licenseId)
-                .organizationId(organizationId)
-                .description("Software product")
-                .productName("cloud")
-                .licenseType("full")
-                .build();
-    }
-
-    public String createLicense(License license, String organizationId, Locale locale) {
-        String responseMessage = null;
-        if (license != null) {
-            license.setOrganizationId(organizationId);
-            responseMessage = String.format(
-                    messages.getMessage("license.create.message", null, locale),
-                    license);
+        License license = licenseRepository.findByOrganizationIdAndLicenseId(organizationId, licenseId);
+        if (null == license) {
+            throw new IllegalArgumentException(
+                    String.format(messages.getMessage(
+                                    "license.search.error.message", null, null),
+                            licenseId, organizationId));
         }
-        return responseMessage;
+        return license.withComment(config.getProperty());
     }
 
-    public String updateLicense(License license, String organizationId, Locale locale) {
-        String responseMessage = null;
-        if (license != null) {
-            license.setOrganizationId(organizationId);
-            //использует пустую локаль для выбора сообщения
-            //будет использовать локаль по умолчанию,
-            //которую задали в классе инициализации
-            responseMessage = String.format(
-                    messages.getMessage("license.update.message", null, null),
-                    license);
-        }
-        return responseMessage;
+    public License createLicense(License license) {
+        license.setLicenseId(UUID.randomUUID().toString());
+        licenseRepository.save(license);
+        return license.withComment(config.getProperty());
     }
 
-    public String deleteLicense(String licenseId, String organizationId) {
-        return String.format(
-                "Deleting license with id %s for the organization %s",
-                licenseId, organizationId);
+    public License updateLicense(License license) {
+        licenseRepository.save(license);
+        return license.withComment(config.getProperty());
+    }
 
+    public String deleteLicense(String licenseId) {
+        String responseMessage;
+        License license = new License();
+        license.setLicenseId(licenseId);
+        licenseRepository.delete(license);
+        responseMessage = String.format(messages.getMessage(
+                "license.delete.message", null, null), licenseId);
+        return responseMessage;
     }
 }
