@@ -2,12 +2,21 @@ spring:
   application:
     name: configserver
   profiles:
-    active: native
+    active:
+    - native, git
   cloud:
     config:
       server:
         native:
           search-locations: classpath:/config
+        git:
+          uri:  ${GIT_CONFIG}
+          searchPaths: license
+          username: ${USERNAME}
+          password: ${TOKEN}
+# create token in GitHub.com
+# create repo with properties(no maven or src)
+# https://github.com/[username]/[reponame].git
 server:
   port: 8071
 
