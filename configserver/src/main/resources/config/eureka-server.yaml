@@ -10,3 +10,4 @@ eureka:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
     server:
       waitingTimeInMsWhenSyncEmpty: 5
+#https://stackoverflow.com/questions/46131196/com-netflix-discovery-shared-transport-transportexception-cannot-execute-reques
