@@ -1,6 +1,9 @@
 package com.cloud.license.model.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.*;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
  * ResponseWrapper.
@@ -9,6 +12,7 @@ import java.util.*;
  * @version 5.0
  * @since 16.11.2022
  */
+@JsonInclude(NON_NULL)
 public class ResponseWrapper {
     private Object data;
     private Object metadata;
