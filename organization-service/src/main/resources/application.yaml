@@ -1,8 +1,11 @@
 spring:
   application:
     name: organization
-  profiles:
-    active: dev
   cloud:
     config:
-      uri: http://configserver:8071
+      enabled: true
+      profile: dev
+  config:
+    import:  "optional:configserver:http://localhost:8071,
+    optional:configserver:http://host.docker.internal:8071,
+    optional:configserver:http://configserver:8071"
