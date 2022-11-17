@@ -1,5 +1,6 @@
 package com.cloud.license.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 /**
  * License.
@@ -29,10 +31,10 @@ import javax.persistence.Table;
 @Table(name = "license")
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class License extends RepresentationModel<License> {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @Column(name = "license_id", nullable = false)
     private String licenseId;
     private String description;
     @Column(name = "organization_id", nullable = false)
@@ -41,8 +43,16 @@ public class License extends RepresentationModel<License> {
     private String productName;
     @Column(name = "license_type", nullable = false)
     private String licenseType;
-    @Column(name = "comment")
+    @Column(name="comment")
     private String comment;
+    @Transient
+    private String organizationName;
+    @Transient
+    private String contactName;
+    @Transient
+    private String contactPhone;
+    @Transient
+    private String contactEmail;
 
     public License withComment(String comment) {
         this.setComment(comment);
