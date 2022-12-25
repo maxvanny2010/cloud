@@ -2,17 +2,20 @@ package com.cloud.license.controller;
 
 import com.cloud.license.model.License;
 import com.cloud.license.service.LicenseService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.cloud.license.utils.UserContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.*;
+import java.util.concurrent.*;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -27,14 +30,14 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RestController
 @RequestMapping(value = "v1/organization/{organizationId}/license")
 public class LicenseController {
-
+    private static final Logger logger = LoggerFactory.getLogger(LicenseController.class);
     private final LicenseService licenseService;
 
     public LicenseController(final LicenseService licenseService) {
         this.licenseService = licenseService;
     }
 
-    @RequestMapping(value = "/{licenseId}", method = RequestMethod.GET)
+    @GetMapping(value = "/{licenseId}")
     public ResponseEntity<License> getLicense(@PathVariable("organizationId") String organizationId,
                                               @PathVariable("licenseId") String licenseId) {
 
@@ -49,7 +52,7 @@ public class LicenseController {
         return ResponseEntity.ok(license);
     }
 
-    @RequestMapping(value = "/{licenseId}/{clientType}", method = RequestMethod.GET)
+    @GetMapping(value = "/{licenseId}/{clientType}")
     public License getLicensesWithClient(@PathVariable("organizationId") String organizationId,
                                          @PathVariable("licenseId") String licenseId,
                                          @PathVariable("clientType") String clientType) {
@@ -72,8 +75,11 @@ public class LicenseController {
         return ResponseEntity.ok(licenseService.deleteLicense(licenseId));
     }
 
-    @RequestMapping(value = "/", method = RequestMethod.GET)
-    public List<License> getLicenses(@PathVariable("organizationId") String organizationId) {
+    @GetMapping(value = "/")
+    public List<License> getLicenses(@PathVariable("organizationId") String organizationId)
+            throws TimeoutException {
+        logger.info("LicenseServiceController Correlation id: {}",
+                UserContextHolder.getContext().getCorrelationId());
         return licenseService.getLicensesByOrganization(organizationId);
     }
 }
