@@ -24,7 +24,63 @@ spring:
     config:
       enabled: true
       profile: dev
+      uri: http://localhost:8071
   config:
-    import:  "optional:configserver:http://localhost:8071,
+    import: "optional:configserver:http://localhost:8071,
     optional:configserver:http://host.docker.internal:8071,
     optional:configserver:http://configserver:8071"
+
+  logging:
+    level:
+      com.netflix: WARN
+      org.springframework.web: WARN
+      com.license: INFO
+
+resilience4j.circuitbreaker:
+  instances:
+    license:
+      registerHealthIndicator: true
+      ringBufferSizeInClosedState: 5
+      ringBufferSizeInHalfOpenState: 3
+      waitDurationInOpenState: 10s
+      failureRateThreshold: 50
+      recordExceptions:
+        - org.springframework.web.client.HttpServerErrorException
+        - java.io.IOException
+        - java.util.concurrent.TimeoutException
+        - org.springframework.web.client.ResourceAccessException
+    organization:
+      registerHealthIndicator: true
+      ringBufferSizeInClosedState: 6
+      ringBufferSizeInHalfOpenState: 4
+      waitDurationInOpenState: 20s
+      failureRateThreshold: 60
+
+resilience4j.ratelimiter:
+  instances:
+    license:
+      limitForPeriod: 5
+      limitRefreshPeriod: 5000
+      timeoutDuration: 1000ms
+
+resilience4j.retry:
+  instances:
+    retryLicense:
+      maxRetryAttempts: 5
+      waitDuration: 10000
+      retry-exceptions:
+        - java.util.concurrent.TimeoutException
+
+resilience4j.bulkhead:
+  instances:
+    bulkheadLicense:
+      maxWaitDuration: 2ms
+      maxConcurrentCalls: 20
+
+
+resilience4j.thread-pool-bulkhead:
+  instances:
+    bulkheadLicense:
+      maxThreadPoolSize: 1
+      coreThreadPoolSize: 1
+      queueCapacity: 1
