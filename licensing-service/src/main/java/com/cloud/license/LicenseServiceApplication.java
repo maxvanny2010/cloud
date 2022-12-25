@@ -2,7 +2,6 @@ package com.cloud.license;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.openfeign.EnableFeignClients;
@@ -15,7 +14,7 @@ import java.util.*;
 
 @SpringBootApplication
 @RefreshScope
-@EnableDiscoveryClient
+//@EnableDiscoveryClient
 @EnableFeignClients
 public class LicenseServiceApplication {
 
@@ -24,10 +23,10 @@ public class LicenseServiceApplication {
     }
 
     @Bean
-    public LocaleResolver localeResolver() {
-        SessionLocaleResolver localeResolver = new SessionLocaleResolver();
-        localeResolver.setDefaultLocale(Locale.US);
-        return localeResolver;
+    public LocaleResolver localesResolver() {
+        var localesResolver = new SessionLocaleResolver();
+        localesResolver.setDefaultLocale(Locale.US);
+        return localesResolver;
     }
 
     @Bean
@@ -44,9 +43,10 @@ public class LicenseServiceApplication {
         messageSource.setBasenames("messages");
         return messageSource;
     }
+
     @LoadBalanced
     @Bean
-    public RestTemplate getRestTemplate(){
+    public RestTemplate getRestTemplate() {
         return new RestTemplate();
     }
 }
