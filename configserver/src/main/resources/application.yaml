@@ -2,25 +2,25 @@ spring:
   application:
     name: configserver
   profiles:
-    active: native, git
-    #, vault
+    active: native
+    #, vault, git
   cloud:
     config:
       server:
-         git:
+        git:
           order: 2
           uri: ${GIT_CONFIG}
           searchPaths: license
           username: ${USERNAME}
           password: ${TOKEN}
-         native:
-           search-locations: classpath:/config
-      #  vault:
-       #   port: 8200
-       #   host: 127.0.0.1
-       #   kvVersion: 2
-       #   backend: kv
-       #   profileSeparator: /
+        native:
+          search-locations: classpath:/config
+        #  vault:
+        #   port: 8200
+        #   host: 127.0.0.1
+        #   kvVersion: 2
+        #   backend: kv
+        #   profileSeparator: /
 # create token in GitHub.com
 # create repo with properties(no maven or src)
 # https://github.com/[username]/[reponame].git
@@ -34,3 +34,6 @@ management:
     web:
       exposure:
         include: "*"
+  endpoint:
+    health:
+      show-details: always
