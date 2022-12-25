@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: eureka
+  boot:
+    admin:
+      context-path: /admin
+server:
+  port: 8070
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    fetch-registry: false
+    register-with-eureka: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+    server:
+      waitingTimeInMsWhenSyncEmpty: 5
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+#https://stackoverflow.com/questions/46131196/com-netflix-discovery-shared-transport-transportexception-cannot-execute-reques
