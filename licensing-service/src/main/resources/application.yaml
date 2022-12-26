@@ -30,11 +30,11 @@ spring:
     optional:configserver:http://host.docker.internal:8071,
     optional:configserver:http://configserver:8071"
 
-  logging:
-    level:
-      com.netflix: WARN
-      org.springframework.web: WARN
-      com.license: INFO
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.license: INFO
 
 resilience4j.circuitbreaker:
   instances:
