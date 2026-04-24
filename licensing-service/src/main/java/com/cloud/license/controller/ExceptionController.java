@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static java.util.Collections.*;
 
@@ -18,30 +18,34 @@ import static java.util.Collections.*;
  * ExceptionController.
  *
  * @author legion
- * @version 5.0
- * @since 17.11.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @ControllerAdvice
 @EnableWebMvc
 public class ExceptionController extends ResponseEntityExceptionHandler {
 
-
-    /**
-     * handleException - Handles all the Exception receiving a request, responseWrapper.
-     */
-    @ExceptionHandler(value = {Exception.class})
-    public @ResponseBody ResponseEntity<ResponseWrapper> handleException(HttpServletRequest request, ResponseWrapper responseWrapper) {
-        return ResponseEntity.ok(responseWrapper);
+    @ExceptionHandler(RuntimeException.class)
+    @SuppressWarnings("unused")
+    public @ResponseBody ResponseEntity<ResponseWrapper> handleException(
+            HttpServletRequest request, Exception e) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR) // ← 500
+                .body(new ResponseWrapper(null, null, null));
     }
 
-    /**
-     * handleIOException - Handles all the Authentication Exceptions to the application.
-     */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ResponseWrapper> handleIOException(HttpServletRequest request, RuntimeException e) {
-        RestErrorList errorList = new RestErrorList(HttpStatus.NOT_ACCEPTABLE, new ErrorMessage(e.getMessage(), e.getMessage()));
-        ResponseWrapper responseWrapper = new ResponseWrapper(null, singletonMap("status", HttpStatus.NOT_ACCEPTABLE), errorList);
-        return ResponseEntity.ok(responseWrapper);
+    @ExceptionHandler(Exception.class)
+    @SuppressWarnings("unused")
+    public ResponseEntity<ResponseWrapper> handleIOException(
+            HttpServletRequest request, Exception e) {
+        RestErrorList errorList = new RestErrorList(
+                HttpStatus.NOT_ACCEPTABLE,
+                new ErrorMessage(e.getMessage(), e.getMessage()));
+        ResponseWrapper responseWrapper = new ResponseWrapper(
+                null, singletonMap("status", HttpStatus.NOT_ACCEPTABLE), errorList);
+        return ResponseEntity
+                .status(HttpStatus.NOT_ACCEPTABLE) // ← 406 вместо 200
+                .body(responseWrapper);
     }
 
 }

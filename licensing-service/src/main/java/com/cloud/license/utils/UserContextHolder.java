@@ -6,8 +6,8 @@ import org.springframework.util.Assert;
  * UserContextHolder.
  *
  * @author legion
- * @version 5.0
- * @since 25/12/2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 public final class UserContextHolder {
     private static final ThreadLocal<UserContext> userContext = new ThreadLocal<>();

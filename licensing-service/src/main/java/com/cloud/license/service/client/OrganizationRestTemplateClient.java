@@ -10,8 +10,8 @@ import org.springframework.web.client.RestTemplate;
  * OrganizationRestTemplateClient.
  *
  * @author legion
- * @version 5.0
- * @since 16.11.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @Component
 public class OrganizationRestTemplateClient {

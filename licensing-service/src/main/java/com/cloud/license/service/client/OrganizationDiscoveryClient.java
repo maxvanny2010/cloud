@@ -13,8 +13,8 @@ import java.util.*;
  * OrganizationDiscoveryClient.
  *
  * @author legion
- * @version 5.0
- * @since 16.11.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @Component
 public class OrganizationDiscoveryClient {
@@ -29,7 +29,7 @@ public class OrganizationDiscoveryClient {
         RestTemplate restTemplate = new RestTemplate();
         List<ServiceInstance> instances = discoveryClient.getInstances("organization");
 
-        if (instances.size() == 0) return null;
+        if (instances.isEmpty()) return null;
         String serviceUri = String.format("%s/v1/organization/%s", instances.get(0).getUri().toString(), organizationId);
 
         ResponseEntity<Organization> restExchange =

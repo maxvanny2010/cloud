@@ -6,6 +6,13 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.hateoas.RepresentationModel;
 
+/**
+ * Organisation.
+ *
+ * @author legion
+ * @version 7.0
+ * @since 22.04.2026
+ */
 @Getter
 @Setter
 @ToString

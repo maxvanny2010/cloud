@@ -10,8 +10,8 @@ import org.springframework.cloud.openfeign.FeignClient;
  * OrganizationFeignClient.
  *
  * @author legion
- * @version 5.0
- * @since 16.11.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @FeignClient("organization")
 public interface OrganizationFeignClient {
@@ -19,5 +19,5 @@ public interface OrganizationFeignClient {
             method= RequestMethod.GET,
             value="/v1/organization/{organizationId}",
             consumes="application/json")
-    Organization getOrganization(@PathVariable("organizationId") String organizationId);
+    Organization getOrganization(@PathVariable String organizationId);
 }

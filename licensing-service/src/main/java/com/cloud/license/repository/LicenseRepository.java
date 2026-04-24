@@ -9,8 +9,8 @@ import java.util.*;
  * LicenseRepository.
  *
  * @author legion
- * @version 5.0
- * @since 19.07.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @Repository
 public interface LicenseRepository extends CrudRepository<License, String> {

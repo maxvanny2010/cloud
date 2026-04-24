@@ -3,19 +3,15 @@ package com.cloud.license.controller;
 import com.cloud.license.model.License;
 import com.cloud.license.service.LicenseService;
 import com.cloud.license.utils.UserContextHolder;
+import jakarta.validation.constraints.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import java.util.*;
-import java.util.concurrent.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -24,9 +20,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  * LicenseController.
  *
  * @author legion
- * @version 5.0
- * @since 29.06.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
+@Validated
 @RestController
 @RequestMapping(value = "v1/organization/{organizationId}/license")
 public class LicenseController {
@@ -38,8 +35,12 @@ public class LicenseController {
     }
 
     @GetMapping(value = "/{licenseId}")
-    public ResponseEntity<License> getLicense(@PathVariable("organizationId") String organizationId,
-                                              @PathVariable("licenseId") String licenseId) {
+    public ResponseEntity<License> getLicense(
+            @PathVariable @Pattern(
+                    regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                    message = "Invalid UUID format"
+            ) String organizationId,
+            @PathVariable String licenseId) {
 
         License license = licenseService.getLicense(licenseId, organizationId, "");
         license.add(
@@ -53,10 +54,10 @@ public class LicenseController {
     }
 
     @GetMapping(value = "/{licenseId}/{clientType}")
-    public License getLicensesWithClient(@PathVariable("organizationId") String organizationId,
-                                         @PathVariable("licenseId") String licenseId,
-                                         @PathVariable("clientType") String clientType) {
-
+    public License getLicensesWithClient(
+            @PathVariable String organizationId,
+            @PathVariable String licenseId,
+            @PathVariable String clientType) {
         return licenseService.getLicense(licenseId, organizationId, clientType);
     }
 
@@ -71,12 +72,12 @@ public class LicenseController {
     }
 
     @DeleteMapping(value = "/{licenseId}")
-    public ResponseEntity<String> deleteLicense(@PathVariable("licenseId") String licenseId) {
+    public ResponseEntity<String> deleteLicense(@PathVariable String licenseId) {
         return ResponseEntity.ok(licenseService.deleteLicense(licenseId));
     }
 
     @GetMapping(value = "/")
-    public List<License> getLicenses(@PathVariable("organizationId") String organizationId)
+    public List<License> getLicenses(@PathVariable String organizationId)
             throws TimeoutException {
         logger.info("LicenseServiceController Correlation id: {}",
                 UserContextHolder.getContext().getCorrelationId());

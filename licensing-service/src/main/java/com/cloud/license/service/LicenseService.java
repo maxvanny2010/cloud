@@ -16,29 +16,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
-import java.util.*;
-import java.util.concurrent.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 /**
  * LicenseService.
  *
- * @author legion
- * @version 5.0
- * @since 29.06.2022
+ * @author maxvanny2010
+ * @version 7.0
+ * @since 22.04.2026
  */
 @Service
 public class LicenseService {
+
     private static final Logger logger = LoggerFactory.getLogger(LicenseService.class);
+
     private final MessageSource messages;
-
     private final LicenseRepository licenseRepository;
-
     private final ServiceConfig config;
-
     private final OrganizationFeignClient organizationFeignClient;
-
     private final OrganizationRestTemplateClient organizationRestClient;
-
     private final OrganizationDiscoveryClient organizationDiscoveryClient;
 
     public LicenseService(final MessageSource messages,
@@ -58,7 +58,11 @@ public class LicenseService {
     public License getLicense(String licenseId, String organizationId, String clientType) {
         License license = licenseRepository.findByOrganizationIdAndLicenseId(organizationId, licenseId);
         if (null == license) {
-            throw new IllegalArgumentException(String.format(messages.getMessage("license.search.error.message", null, null), licenseId, organizationId));
+            throw new IllegalArgumentException(
+                    messages.getMessage("license.search.error.message",
+                            new Object[]{licenseId, organizationId},
+                            Locale.getDefault())
+            );
         }
         Organization organization = retrieveOrganizationInfo(organizationId, clientType);
         if (null != organization) {
@@ -67,30 +71,28 @@ public class LicenseService {
             license.setContactEmail(organization.getContactEmail());
             license.setContactPhone(organization.getContactPhone());
         }
-
         return license.withComment(config.getProperty());
     }
 
     private Organization retrieveOrganizationInfo(String organizationId, String clientType) {
-        Organization organization;
-        switch (clientType) {
+        return switch (clientType) {
             case "feign" -> {
-                System.out.println("I am using the feign client");
-                organization = organizationFeignClient.getOrganization(organizationId);
+                logger.info("Using feign client for organizationId={}", organizationId);
+                yield organizationFeignClient.getOrganization(organizationId);
             }
             case "rest" -> {
-                System.out.println("I am using the rest client");
-                organization = organizationRestClient.getOrganization(organizationId);
+                logger.info("Using rest client for organizationId={}", organizationId);
+                yield organizationRestClient.getOrganization(organizationId);
             }
             case "discovery" -> {
-                System.out.println("I am using the discovery client");
-                organization = organizationDiscoveryClient.getOrganization(organizationId);
+                logger.info("Using discovery client for organizationId={}", organizationId);
+                yield organizationDiscoveryClient.getOrganization(organizationId);
             }
-            default ->
-                    organization = organizationRestClient.getOrganization(organizationId);
-        }
-
-        return organization;
+            default -> {
+                logger.info("Using default rest client for organizationId={}", organizationId);
+                yield organizationRestClient.getOrganization(organizationId);
+            }
+        };
     }
 
     public License createLicense(License license) {
@@ -105,28 +107,24 @@ public class LicenseService {
     }
 
     public String deleteLicense(String licenseId) {
-        String responseMessage;
         License license = new License();
         license.setLicenseId(licenseId);
         licenseRepository.delete(license);
-        responseMessage = String.format(
-                messages.getMessage("license.delete.message", null, null),
+        return String.format(
+                messages.getMessage("license.delete.message", null, Locale.getDefault()),
                 licenseId);
-        return responseMessage;
-
     }
 
     @CircuitBreaker(name = "license", fallbackMethod = "buildFallbackLicenseList")
     @RateLimiter(name = "license", fallbackMethod = "buildFallbackLicenseList")
     @Retry(name = "retryLicense", fallbackMethod = "buildFallbackLicenseList")
-    @Bulkhead(name = "bulkheadLicense", type = Type.THREADPOOL, fallbackMethod = "buildFallbackLicenseList")
-    public List<License> getLicensesByOrganization(String organizationId)
-            throws TimeoutException {
-        randomlyRunLong();
+    @Bulkhead(name = "bulkheadLicense", type = Type.SEMAPHORE, fallbackMethod = "buildFallbackLicenseList")
+    public List<License> getLicensesByOrganization(String organizationId) {
         return licenseRepository.findByOrganizationId(organizationId);
     }
 
     private List<License> buildFallbackLicenseList(String organizationId, Throwable t) {
+        logger.warn("Fallback triggered for organizationId={}, reason={}", organizationId, t.getMessage());
         List<License> fallbackList = new ArrayList<>();
         License license = new License();
         license.setLicenseId("0000000-00-00000");
@@ -134,21 +132,5 @@ public class LicenseService {
         license.setProductName("Sorry no licensing information currently available");
         fallbackList.add(license);
         return fallbackList;
-    }
-
-    private void randomlyRunLong() throws TimeoutException {
-        Random rand = new Random();
-        int randomNum = rand.nextInt((3 - 1) + 1) + 1;
-        if (randomNum == 3) sleep();
-    }
-
-    private void sleep() throws TimeoutException {
-        try {
-            System.out.println("Sleep");
-            Thread.sleep(5000);
-            throw new java.util.concurrent.TimeoutException();
-        } catch (InterruptedException e) {
-            logger.error(e.getMessage());
-        }
     }
 }
