@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="v2-1-insert-organizations" author="maxvanny2010">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM public.organizations
+            </sqlCheck>
+        </preConditions>
+
+        <insert tableName="organizations" schemaName="public">
+            <column name="organization_id" value="e6a625cc-718b-48c2-ac76-1dfdff9a531e"/>
+            <column name="name"            value="ATU Donegal"/>
+            <column name="contact_name"    value="Head of Faculty"/>
+            <column name="contact_email"   value="computing@atu.ie"/>
+            <column name="contact_phone"   value="+353749186000"/>
+        </insert>
+
+        <insert tableName="organizations" schemaName="public">
+            <column name="organization_id" value="d898a142-de44-466c-8c88-9ceb2c2429d3"/>
+            <column name="name"            value="Computing and DevOps Department"/>
+            <column name="contact_name"    value="Programme Coordinator"/>
+            <column name="contact_email"   value="devops@atu.ie"/>
+            <column name="contact_phone"   value="+353749186100"/>
+        </insert>
+
+        <insert tableName="organizations" schemaName="public">
+            <column name="organization_id" value="e839ee96-28de-4f67-bb79-870ca89743a0"/>
+            <column name="name"            value="Student Services Office"/>
+            <column name="contact_name"    value="Student Support Manager"/>
+            <column name="contact_email"   value="studentservices@atu.ie"/>
+            <column name="contact_phone"   value="+353749186200"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="v2-2-insert-licenses" author="maxvanny2010">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM public.licenses
+            </sqlCheck>
+        </preConditions>
+
+        <!-- ATU Donegal — 2 enterprise лицензии -->
+        <insert tableName="licenses" schemaName="public">
+            <column name="license_id"      value="f2a9c9d4-d2c0-44fa-97fe-724d77173c62"/>
+            <column name="organization_id" value="e6a625cc-718b-48c2-ac76-1dfdff9a531e"/>
+            <column name="description"     value="Enterprise cloud infrastructure license for main campus"/>
+            <column name="product_name"    value="Cloud Infrastructure Suite"/>
+            <column name="license_type"    value="complete"/>
+            <column name="comment"         value="Approved by IT Governance Board"/>
+        </insert>
+
+        <insert tableName="licenses" schemaName="public">
+            <column name="license_id"      value="a1b2c3d4-e5f6-7890-abcd-ef1234567890"/>
+            <column name="organization_id" value="e6a625cc-718b-48c2-ac76-1dfdff9a531e"/>
+            <column name="description"     value="Microservices monitoring and observability platform"/>
+            <column name="product_name"    value="Observability Platform"/>
+            <column name="license_type"    value="complete"/>
+            <column name="comment"         value="Approved by IT Governance Board"/>
+        </insert>
+
+        <!-- Computing and DevOps Department — DevOps toolchain -->
+        <insert tableName="licenses" schemaName="public">
+            <column name="license_id"      value="279709ff-e6d5-4a54-8b55-a5c37542025b"/>
+            <column name="organization_id" value="d898a142-de44-466c-8c88-9ceb2c2429d3"/>
+            <column name="description"     value="DevOps toolchain license for lab and teaching environment"/>
+            <column name="product_name"    value="DevOps Toolchain"/>
+            <column name="license_type"    value="personal"/>
+            <column name="comment"         value="Department budget 2024"/>
+        </insert>
+
+        <insert tableName="licenses" schemaName="public">
+            <column name="license_id"      value="b2c3d4e5-f6a7-8901-bcde-f12345678901"/>
+            <column name="organization_id" value="d898a142-de44-466c-8c88-9ceb2c2429d3"/>
+            <column name="description"     value="Linux lab environment license for student workstations"/>
+            <column name="product_name"    value="Linux Lab Environment"/>
+            <column name="license_type"    value="personal"/>
+            <column name="comment"         value="Department budget 2024"/>
+        </insert>
+
+        <!-- Student Services Office — student portal -->
+        <insert tableName="licenses" schemaName="public">
+            <column name="license_id"      value="c3d4e5f6-a7b8-9012-cdef-123456789012"/>
+            <column name="organization_id" value="e839ee96-28de-4f67-bb79-870ca89743a0"/>
+            <column name="description"     value="Student portal and self-service platform license"/>
+            <column name="product_name"    value="Student Portal"/>
+            <column name="license_type"    value="personal"/>
+            <column name="comment"         value="Central IT allocation"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

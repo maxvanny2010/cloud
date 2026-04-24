@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- organizations таблица создаётся первой — на неё ссылается licenses FK -->
+    <changeSet id="v1-1-create-organizations" author="maxvanny2010">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="organizations"/></not>
+        </preConditions>
+        <createTable tableName="organizations" schemaName="public">
+            <column name="organization_id" type="text">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="text"/>
+            <column name="contact_name" type="text"/>
+            <column name="contact_email" type="text"/>
+            <column name="contact_phone" type="text"/>
+        </createTable>
+        <sql>ALTER TABLE public.organizations OWNER TO postgres;</sql>
+    </changeSet>
+
+    <changeSet id="v1-2-create-licenses" author="maxvanny2010">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="licenses"/></not>
+        </preConditions>
+        <createTable tableName="licenses" schemaName="public">
+            <column name="license_id" type="text">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="organization_id" type="text">
+                <constraints nullable="false"
+                             foreignKeyName="licenses_organization_id_fkey"
+                             references="public.organizations(organization_id)"/>
+            </column>
+            <column name="description" type="text"/>
+            <column name="product_name" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="license_type" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="text"/>
+        </createTable>
+        <sql>ALTER TABLE public.licenses OWNER TO postgres;</sql>
+    </changeSet>
+
+</databaseChangeLog>
