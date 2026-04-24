@@ -1,0 +1,85 @@
+server:
+  port: 8072
+
+spring:
+  application:
+    name: gateway
+
+  config:
+    import: "optional:configserver:http://configserver:8071"
+
+  cloud:
+    gateway:
+      routes:
+
+        # =========================
+        # LICENSE SERVICE
+        # =========================
+        - id: license-service
+          uri: lb://LICENSE
+          predicates:
+            - Path=/api/licenses/**
+          filters:
+            - RewritePath=/api/licenses/(?<segment>.*), /${segment}
+
+        # =========================
+        # ORGANIZATION SERVICE
+        # =========================
+        - id: organization-service
+          uri: lb://ORGANIZATION
+          predicates:
+            - Path=/api/organizations/**
+          filters:
+            - RewritePath=/api/organizations/(?<segment>.*), /${segment}
+
+        # =========================
+        # HEALTH ENDPOINTS
+        # =========================
+        - id: license-health
+          uri: lb://LICENSE
+          predicates:
+            - Path=/api/health/license
+          filters:
+            - SetPath=/actuator/health
+
+        - id: organization-health
+          uri: lb://ORGANIZATION
+          predicates:
+            - Path=/api/health/organization
+          filters:
+            - SetPath=/actuator/health
+
+        - id: eureka-health
+          uri: http://eureka:8070
+          predicates:
+            - Path=/api/health/eureka
+          filters:
+            - SetPath=/actuator/health
+
+        - id: config-health
+          uri: http://configserver:8071
+          predicates:
+            - Path=/api/health/config
+          filters:
+            - SetPath=/actuator/health
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:8070/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      enabled: true
