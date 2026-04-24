@@ -1,12 +1,42 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+
+server:
+  port: 8080
+
 spring:
   application:
     name: organization
   cloud:
     config:
       enabled: true
-      profile: dev
-      uri: http://localhost:8071
+      uri: http://configserver:8071
   config:
-    import: "optional:configserver:http://localhost:8071,
-    optional:configserver:http://host.docker.internal:8071,
-    optional:configserver:http://configserver:8071"
+    import: "optional:configserver:http://configserver:8071"
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.organization: INFO
+    liquibase: INFO

@@ -9,10 +9,9 @@ import java.util.*;
  * OrganizationRepository.
  *
  * @author legion
- * @version 5.0
- * @since 03.08.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @Repository
 public interface OrganizationRepository extends CrudRepository<Organization, String> {
-    Optional<Organization> findById(String organizationId);
 }

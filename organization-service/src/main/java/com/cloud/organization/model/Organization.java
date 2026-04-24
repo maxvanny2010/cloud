@@ -2,17 +2,17 @@ package com.cloud.organization.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * Organization.
  *
  * @author legion
- * @version 5.0
- * @since 03.08.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @Entity
 @Getter

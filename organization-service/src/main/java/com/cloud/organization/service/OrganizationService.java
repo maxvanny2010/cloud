@@ -9,8 +9,8 @@ import java.util.*;
  * OrganizationService.
  *
  * @author legion
- * @version 5.0
- * @since 03.08.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @Service
 public class OrganizationService {
@@ -22,8 +22,9 @@ public class OrganizationService {
     }
 
     public Organization findById(String organizationId) {
-        Optional<Organization> opt = repository.findById(organizationId);
-        return opt.orElse(null);
+        return repository.findById(organizationId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Organization not found with id: " + organizationId));
     }
 
     public Organization create(Organization organization) {
@@ -37,7 +38,7 @@ public class OrganizationService {
         repository.save(organization);
     }
 
-    public void delete(Organization organization) {
-        repository.deleteById(organization.getId());
+    public void delete(String organizationId) {
+        repository.deleteById(organizationId);
     }
 }

@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
  * OrganisationController.
  *
  * @author legion
- * @version 5.0
- * @since 03.08.2022
+ * @version 7.0
+ * @since 22.04.2026
  */
 @RestController
 @RequestMapping(value = "v1/organization")
@@ -33,13 +33,14 @@ public class OrganizationController {
 
     @GetMapping(value = "/{organizationId}")
     public ResponseEntity<Organization> getOrganization(
-            @PathVariable("organizationId") String organizationId) {
+            @PathVariable String organizationId) {
         return ResponseEntity.ok(service.findById(organizationId));
     }
 
     @PutMapping(value = "/{organizationId}")
-    public void updateOrganization(@PathVariable("organizationId") String id,
+    public void updateOrganization(@PathVariable String organizationId,
                                    @RequestBody Organization organization) {
+        organization.setId(organizationId);
         service.update(organization);
     }
 
@@ -50,9 +51,8 @@ public class OrganizationController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(value = "/{organizationId}")
-    public void deleteOrganization(@PathVariable("id") String id,
-                                   @RequestBody Organization organization) {
-        service.delete(organization);
+    public void deleteOrganization(@PathVariable String organizationId) {
+        service.delete(organizationId);
     }
 
 }
