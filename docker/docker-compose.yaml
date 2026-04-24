@@ -1,5 +1,7 @@
-version: '2.1'
+version: '3.8'
+
 services:
+
   database:
     image: postgres:latest
     ports:
@@ -12,69 +14,130 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/1-init.sql
       - ./data.sql:/docker-entrypoint-initdb.d/2-data.sql
     networks:
-      backend:
-        aliases:
-          - "database"
+      - backend
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
+
   configserver:
     image: configserver:latest
     ports:
       - "8071:8071"
     environment:
-      ENCRYPT_KEY: "ce37ee3a9e363914cd5e217d00d059a16448fd4b9fdf4a4fdb5de140aed10d94"
+      ENCRYPT_KEY: "secretkey"
     networks:
-      backend:
-        aliases:
-          - "configserver"
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8071/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   eureka:
     image: eureka:latest
     ports:
       - "8070:8070"
     depends_on:
+      configserver:
+        condition: service_healthy
       database:
         condition: service_healthy
-      configserver:
-        condition: service_started
     networks:
-      backend:
-        aliases:
-          - "eureka"
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8070/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   license:
     image: license:latest
     environment:
       PROFILE: "dev"
+      SPRING_PROFILES_ACTIVE: "dev"
       CONFIGSERVER_URI: "http://configserver:8071"
-      CONFIGSERVER_PORT: "8071"
       DATABASESERVER_PORT: "5432"
       ENCRYPT_KEY: "secretkey"
     depends_on:
+      configserver:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
       database:
         condition: service_healthy
-      configserver:
-        condition: service_started
     ports:
       - "8080:8080"
     networks:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
   organization:
     image: organization:latest
     environment:
       PROFILE: "dev"
+      SPRING_PROFILES_ACTIVE: "dev"
       CONFIGSERVER_URI: "http://configserver:8071"
-      CONFIGSERVER_PORT: "8071"
       DATABASESERVER_PORT: "5432"
       ENCRYPT_KEY: "secretkey"
     depends_on:
+      configserver:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
       database:
         condition: service_healthy
-      configserver:
-        condition: service_started
     ports:
-      - "8081:8081"
+      - "8081:8080"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  gateway:
+    image: gateway:latest
+    ports:
+      - "8072:8072"
+    environment:
+      SPRING_PROFILES_ACTIVE: "dev"
+      CONFIGSERVER_URI: "http://configserver:8071"
+      ENCRYPT_KEY: "secretkey"
+    depends_on:
+      configserver:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8072/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  dashboard:
+    image: dashboard:latest
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: "production"
+      GATEWAY_URL: "http://gateway:8072"
+    depends_on:
+      gateway:
+        condition: service_healthy
     networks:
       - backend
 
