@@ -15,15 +15,6 @@ spring:
           password: ${TOKEN}
         native:
           search-locations: classpath:/config
-        #  vault:
-        #   port: 8200
-        #   host: 127.0.0.1
-        #   kvVersion: 2
-        #   backend: kv
-        #   profileSeparator: /
-# create token in GitHub.com
-# create repo with properties(no maven or src)
-# https://github.com/[username]/[reponame].git
 server:
   port: 8071
 encrypt:
