@@ -1,0 +1,33 @@
+# ─── Java / Maven ───────────────────────────────
+**/target/
+**/*.class
+**/*.jar
+**/*.war
+*.iml
+.mvn/
+
+# ─── Spring Boot ────────────────────────────────
+**/application-local.yaml
+**/application-local.properties
+**/*.bak
+
+# ─── Node / Next.js ─────────────────────────────
+**/node_modules/
+**/.next/
+cloud-dashboard/.env.local
+cloud-dashboard/tsconfig.tsbuildinfo
+
+# ─── IntelliJ IDEA ──────────────────────────────
+.idea/
+*.iws
+*.ipr
+
+# ─── OS ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Vault / secrets ────────────────────────────
+**/*.hcl
+**/engine_init.json
+**/payload.json
