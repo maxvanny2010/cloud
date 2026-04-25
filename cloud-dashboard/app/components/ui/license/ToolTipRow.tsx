@@ -1,6 +1,6 @@
 export function TooltipRow({
-                        label, value, mono = false,
-                    }: {
+                               label, value, mono = false,
+                           }: {
     label: string;
     value?: string;
     mono?: boolean;

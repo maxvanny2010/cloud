@@ -1,10 +1,10 @@
 package com.cloud.license.service.client;
 
 import com.cloud.license.model.Organization;
+import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.cloud.openfeign.FeignClient;
 
 /**
  * OrganizationFeignClient.
@@ -16,8 +16,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 @FeignClient("organization")
 public interface OrganizationFeignClient {
     @RequestMapping(
-            method= RequestMethod.GET,
-            value="/v1/organization/{organizationId}",
-            consumes="application/json")
+            method = RequestMethod.GET,
+            value = "/v1/organization/{organizationId}",
+            consumes = "application/json")
     Organization getOrganization(@PathVariable String organizationId);
 }

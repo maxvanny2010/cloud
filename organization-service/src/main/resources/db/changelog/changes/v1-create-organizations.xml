@@ -7,7 +7,9 @@
 
     <changeSet id="v1-1-create-organizations" author="maxvanny2010">
         <preConditions onFail="MARK_RAN">
-            <not><tableExists tableName="organizations"/></not>
+            <not>
+                <tableExists tableName="organizations"/>
+            </not>
         </preConditions>
         <createTable tableName="organizations" schemaName="public">
             <column name="organization_id" type="text">

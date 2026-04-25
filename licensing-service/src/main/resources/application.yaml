@@ -28,8 +28,6 @@ spring:
     import: "optional:configserver:http://configserver:8071"
   jpa:
     hibernate:
-      # ВАЖНО: validate — Hibernate проверяет что схема совпадает с Entity
-      # create/update убраны — схемой управляет Liquibase
       ddl-auto: validate
     open-in-view: false
   liquibase:

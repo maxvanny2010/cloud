@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.4.2</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>com.configserver</groupId>
     <artifactId>configserver</artifactId>
@@ -64,7 +64,6 @@
                     </image>
                 </configuration>
             </plugin>
-            <!-- This plugin is used to create a docker image and publish the image to docker hub-->
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>dockerfile-maven-plugin</artifactId>

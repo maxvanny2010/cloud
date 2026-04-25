@@ -1,12 +1,12 @@
 "use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import {useEffect} from "react";
+import {useRouter} from "next/navigation";
 
 interface Props {
     interval?: number; // ms, default 15s
 }
 
-export default function AutoRefresh({ interval = 15_000 }: Props) {
+export default function AutoRefresh({interval = 15_000}: Props) {
     const router = useRouter();
 
     useEffect(() => {
@@ -14,5 +14,5 @@ export default function AutoRefresh({ interval = 15_000 }: Props) {
         return () => clearInterval(id);
     }, [router, interval]);
 
-    return null; // ничего не рендерит
+    return null;
 }

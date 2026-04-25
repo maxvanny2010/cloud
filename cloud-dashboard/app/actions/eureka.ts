@@ -6,7 +6,7 @@ export interface EurekaApps {
 
 export async function getEurekaApps(): Promise<EurekaApps> {
     try {
-        const res = await fetch(`${process.env.GATEWAY_URL}/api/health/license`, { cache: "no-store" });
+        const res = await fetch(`${process.env.GATEWAY_URL}/api/health/license`, {cache: "no-store"});
         const data = await res.json();
         return (
             data?.components?.discoveryComposite?.components?.eureka?.details?.applications ?? {}

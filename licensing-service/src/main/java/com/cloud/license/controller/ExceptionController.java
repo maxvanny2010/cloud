@@ -3,6 +3,7 @@ package com.cloud.license.controller;
 import com.cloud.license.model.util.ErrorMessage;
 import com.cloud.license.model.util.ResponseWrapper;
 import com.cloud.license.model.util.RestErrorList;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -10,9 +11,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-import jakarta.servlet.http.HttpServletRequest;
 
-import static java.util.Collections.*;
+import static java.util.Collections.singletonMap;
 
 /**
  * ExceptionController.

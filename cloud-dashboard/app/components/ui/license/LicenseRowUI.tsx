@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
-import type { License } from "../../../types";
+import {useState} from "react";
+import {LICENSE_TYPE_COLORS} from "@/app/constants";
+import type {License} from "@/app/types";
 import LicenseInfo from "./LicenseInfo";
 import LicenseMeta from "./LicenseMeta";
-import { LICENSE_TYPE_COLORS } from "../../../constants";
 
-export default function LicenseRowUI({ license }: { license: License }) {
+export default function LicenseRowUI({license}: { license: License }) {
     const [hovered, setHovered] = useState(false);
     const typeColor = LICENSE_TYPE_COLORS[license.licenseType] ?? LICENSE_TYPE_COLORS.default;
 
@@ -18,14 +18,14 @@ export default function LicenseRowUI({ license }: { license: License }) {
                 cursor: "pointer",
                 transition: "border-color 0.2s, box-shadow 0.2s",
                 borderColor: hovered ? typeColor.border : undefined,
-                boxShadow:   hovered ? `0 0 18px ${typeColor.bg}` : undefined,
+                boxShadow: hovered ? `0 0 18px ${typeColor.bg}` : undefined,
             }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <LicenseInfo license={license} />
-                <LicenseMeta license={license} />
+            <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start"}}>
+                <LicenseInfo license={license}/>
+                <LicenseMeta license={license}/>
             </div>
 
             {hovered && (
@@ -64,22 +64,22 @@ export default function LicenseRowUI({ license }: { license: License }) {
                         License Details
                     </div>
 
-                    <TooltipRow label="ID"        value={license.licenseId} mono />
-                    <TooltipRow label="Product"   value={license.productName} />
+                    <TooltipRow label="ID" value={license.licenseId} mono/>
+                    <TooltipRow label="Product" value={license.productName}/>
                     {license.organizationId &&
-                        <TooltipRow label="Org ID"  value={license.organizationId} mono />}
+                        <TooltipRow label="Org ID" value={license.organizationId} mono/>}
                     {license.organizationName &&
-                        <TooltipRow label="Org"     value={license.organizationName} />}
+                        <TooltipRow label="Org" value={license.organizationName}/>}
                     {license.description &&
-                        <TooltipRow label="Desc"    value={license.description} />}
+                        <TooltipRow label="Desc" value={license.description}/>}
                     {license.comment &&
-                        <TooltipRow label="Comment" value={license.comment} />}
+                        <TooltipRow label="Comment" value={license.comment}/>}
                     {license.contactName &&
-                        <TooltipRow label="Contact" value={license.contactName} />}
+                        <TooltipRow label="Contact" value={license.contactName}/>}
                     {license.contactEmail &&
-                        <TooltipRow label="Email"   value={license.contactEmail} />}
+                        <TooltipRow label="Email" value={license.contactEmail}/>}
                     {license.contactPhone &&
-                        <TooltipRow label="Phone"   value={license.contactPhone} />}
+                        <TooltipRow label="Phone" value={license.contactPhone}/>}
                 </div>
             )}
         </div>

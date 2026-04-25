@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.4.2</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>com.organization</groupId>
     <artifactId>organization-service</artifactId>
@@ -29,14 +29,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
-            <!--don work for exclude hikari  for cloud server config connect <scope>provided</scope> -->
         </dependency>
         <!--postgres-->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
-        <!-- liquibase — управление миграциями БД -->
+        <!-- liquibase -->
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
@@ -99,7 +98,6 @@
                         <enabled>true</enabled>
                     </layers>
                     <arguments>
-                        <!--<argument>-spring.profiles.active=dev</argument>-->
                     </arguments>
                     <excludes>
                         <exclude>

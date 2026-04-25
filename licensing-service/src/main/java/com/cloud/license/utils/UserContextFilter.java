@@ -1,21 +1,14 @@
 package com.cloud.license.utils;
 
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 
-import static com.cloud.license.utils.UserContext.AUTH_TOKEN;
-import static com.cloud.license.utils.UserContext.CORRELATION_ID;
-import static com.cloud.license.utils.UserContext.ORGANIZATION_ID;
-import static com.cloud.license.utils.UserContext.USER_ID;
+import static com.cloud.license.utils.UserContext.*;
 
 /**
  * UserContextFilter.

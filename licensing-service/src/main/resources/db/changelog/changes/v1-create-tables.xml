@@ -5,10 +5,11 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <!-- organizations таблица создаётся первой — на неё ссылается licenses FK -->
     <changeSet id="v1-1-create-organizations" author="maxvanny2010">
         <preConditions onFail="MARK_RAN">
-            <not><tableExists tableName="organizations"/></not>
+            <not>
+                <tableExists tableName="organizations"/>
+            </not>
         </preConditions>
         <createTable tableName="organizations" schemaName="public">
             <column name="organization_id" type="text">
@@ -24,7 +25,9 @@
 
     <changeSet id="v1-2-create-licenses" author="maxvanny2010">
         <preConditions onFail="MARK_RAN">
-            <not><tableExists tableName="licenses"/></not>
+            <not>
+                <tableExists tableName="licenses"/>
+            </not>
         </preConditions>
         <createTable tableName="licenses" schemaName="public">
             <column name="license_id" type="text">

@@ -3,7 +3,8 @@ package com.cloud.license.repository;
 import com.cloud.license.model.License;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-import java.util.*;
+
+import java.util.List;
 
 /**
  * LicenseRepository.

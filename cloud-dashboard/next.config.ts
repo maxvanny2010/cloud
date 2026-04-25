@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type {NextConfig} from "next";
 
 const GW = process.env.GATEWAY_URL ?? "http://gateway:8072";
 

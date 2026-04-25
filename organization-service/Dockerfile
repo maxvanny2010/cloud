@@ -1,11 +1,9 @@
 FROM eclipse-temurin:21-jdk as build
 WORKDIR application
 ARG JAR_FILE=target/*.jar
-# Добавить файл jar приложения в контейнер(image)
 COPY ${JAR_FILE} application.jar
-# распаковать файл jar
 RUN java -Djarmode=layertools -jar application.jar extract
-# шаг 2
+
 FROM eclipse-temurin:21-jdk
 WORKDIR application
 COPY --from=build application/dependencies/ ./

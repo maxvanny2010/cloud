@@ -3,7 +3,6 @@ spring:
     name: configserver
   profiles:
     active: native
-    #, vault, git
   cloud:
     config:
       server:

@@ -7,7 +7,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import java.util.*;
+
+import java.util.List;
 
 /**
  * OrganizationDiscoveryClient.
@@ -30,7 +31,7 @@ public class OrganizationDiscoveryClient {
         List<ServiceInstance> instances = discoveryClient.getInstances("organization");
 
         if (instances.isEmpty()) return null;
-        String serviceUri = String.format("%s/v1/organization/%s", instances.get(0).getUri().toString(), organizationId);
+        String serviceUri = String.format("%s/v1/organization/%s", instances.getFirst().getUri().toString(), organizationId);
 
         ResponseEntity<Organization> restExchange =
                 restTemplate.exchange(
