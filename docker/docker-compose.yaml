@@ -2,6 +2,7 @@ services:
 
   database:
     image: postgres:latest
+    restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
@@ -21,6 +22,7 @@ services:
 
   configserver:
     image: ghcr.io/maxvanny2010/configserver:latest
+    restart: unless-stopped
     ports:
       - "8071:8071"
     environment:
@@ -36,6 +38,7 @@ services:
 
   eureka:
     image: ghcr.io/maxvanny2010/eureka:latest
+    restart: unless-stopped
     ports:
       - "8070:8070"
     depends_on:
@@ -54,6 +57,7 @@ services:
 
   license:
     image: ghcr.io/maxvanny2010/license:latest
+    restart: unless-stopped
     environment:
       PROFILE: "prod"
       SPRING_PROFILES_ACTIVE: "prod"
@@ -80,6 +84,7 @@ services:
 
   organization:
     image: ghcr.io/maxvanny2010/organization:latest
+    restart: unless-stopped
     environment:
       PROFILE: "prod"
       SPRING_PROFILES_ACTIVE: "prod"
@@ -106,6 +111,7 @@ services:
 
   gateway:
     image: ghcr.io/maxvanny2010/gateway:latest
+    restart: unless-stopped
     ports:
       - "8072:8072"
     environment:
@@ -128,6 +134,7 @@ services:
 
   dashboard:
     image: ghcr.io/maxvanny2010/dashboard:latest
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
