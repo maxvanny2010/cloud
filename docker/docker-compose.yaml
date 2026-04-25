@@ -22,7 +22,7 @@ services:
       retries: 5
 
   configserver:
-    image: configserver:latest
+    image: ghcr.io/maxvanny2010/configserver:latest
     ports:
       - "8071:8071"
     environment:
@@ -37,7 +37,7 @@ services:
       start_period: 30s
 
   eureka:
-    image: eureka:latest
+    image: ghcr.io/maxvanny2010/eureka:latest
     ports:
       - "8070:8070"
     depends_on:
@@ -55,10 +55,10 @@ services:
       start_period: 30s
 
   license:
-    image: license:latest
+    image: ghcr.io/maxvanny2010/license:latest
     environment:
-      PROFILE: "dev"
-      SPRING_PROFILES_ACTIVE: "dev"
+      PROFILE: "prod"
+      SPRING_PROFILES_ACTIVE: "prod"
       CONFIGSERVER_URI: "http://configserver:8071"
       DATABASESERVER_PORT: "5432"
       ENCRYPT_KEY: "secretkey"
@@ -81,10 +81,10 @@ services:
       start_period: 60s
 
   organization:
-    image: organization:latest
+    image: ghcr.io/maxvanny2010/organization:latest
     environment:
-      PROFILE: "dev"
-      SPRING_PROFILES_ACTIVE: "dev"
+      PROFILE: "prod"
+      SPRING_PROFILES_ACTIVE: "prod"
       CONFIGSERVER_URI: "http://configserver:8071"
       DATABASESERVER_PORT: "5432"
       ENCRYPT_KEY: "secretkey"
@@ -107,11 +107,11 @@ services:
       start_period: 60s
 
   gateway:
-    image: gateway:latest
+    image: ghcr.io/maxvanny2010/gateway:latest
     ports:
       - "8072:8072"
     environment:
-      SPRING_PROFILES_ACTIVE: "dev"
+      SPRING_PROFILES_ACTIVE: "prod"
       CONFIGSERVER_URI: "http://configserver:8071"
       ENCRYPT_KEY: "secretkey"
     depends_on:
@@ -129,7 +129,7 @@ services:
       start_period: 60s
 
   dashboard:
-    image: dashboard:latest
+    image: ghcr.io/maxvanny2010/dashboard:latest
     ports:
       - "3000:3000"
     environment:
