@@ -4,8 +4,22 @@ server:
 spring:
   application:
     name: eureka
-  cloud:
-    config:
-      enabled: true
   config:
     import: "optional:configserver:http://configserver:8071"
+  cloud:
+    config:
+      fail-fast: false
+
+eureka:
+  client:
+    fetch-registry: false
+    register-with-eureka: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
