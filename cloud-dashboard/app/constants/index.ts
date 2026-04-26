@@ -21,6 +21,17 @@ export const API = {
     },
 } as const;
 
+const BASE_URL = typeof window !== "undefined"
+    ? window.location.origin
+    : "";
+
+export const PORT_URLS: Record<string, string> = {
+    "8080": `${BASE_URL}/api/health/license`,
+    "8081": `${BASE_URL}/api/health/organization`,
+    "8070": `${BASE_URL}/api/health/eureka`,
+    "8071": `${BASE_URL}/api/health/config`,
+};
+
 export const SERVICES: ServiceConfig[] = [
     {name: "License", url: API.browser.health.license, port: "8080", icon: "license", description: "Licenses"},
     {

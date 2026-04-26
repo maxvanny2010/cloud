@@ -1,13 +1,6 @@
 "use client";
 import {useState} from "react";
-import {SERVICES} from "@/app/constants";
-
-const PORT_URLS: Record<string, string> = {
-    "8080": "http://localhost:8080/actuator/health",
-    "8081": "http://localhost:8081/actuator/health",
-    "8070": "http://localhost:8070",
-    "8071": "http://localhost:8071/actuator/health",
-};
+import {PORT_URLS, SERVICES} from "@/app/constants";
 
 export default function DashboardFooter() {
     return (
