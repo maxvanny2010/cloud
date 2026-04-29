@@ -12,9 +12,6 @@ spring:
     gateway:
       routes:
 
-        # =========================
-        # LICENSE SERVICE
-        # =========================
         - id: license-service
           uri: lb://LICENSE
           predicates:
@@ -22,9 +19,6 @@ spring:
           filters:
             - RewritePath=/api/licenses/(?<segment>.*), /${segment}
 
-        # =========================
-        # ORGANIZATION SERVICE
-        # =========================
         - id: organization-service
           uri: lb://ORGANIZATION
           predicates:
@@ -32,9 +26,6 @@ spring:
           filters:
             - RewritePath=/api/organizations/(?<segment>.*), /${segment}
 
-        # =========================
-        # HEALTH ENDPOINTS
-        # =========================
         - id: license-health
           uri: lb://LICENSE
           predicates:
@@ -83,3 +74,9 @@ management:
   endpoint:
     gateway:
       access: read-only
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://jaeger:4318/v1/traces

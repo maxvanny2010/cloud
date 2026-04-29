@@ -13,6 +13,12 @@ management:
       enabled: true
     diskspace:
       enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://jaeger:4318/v1/traces
 
 server:
   port: 8080
@@ -38,5 +44,6 @@ logging:
   level:
     com.netflix: WARN
     org.springframework.web: WARN
-    com.organization: INFO
-    liquibase: INFO
+    com.organization: DEBUG
+    liquibase: WARN
+    org.hibernate.SQL: WARN

@@ -2,7 +2,6 @@ package com.cloud.license.controller;
 
 import com.cloud.license.model.License;
 import com.cloud.license.service.LicenseService;
-import com.cloud.license.utils.UserContextHolder;
 import jakarta.validation.constraints.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,8 +78,6 @@ public class LicenseController {
     @GetMapping(value = "/")
     public List<License> getLicenses(@PathVariable String organizationId)
             throws TimeoutException {
-        logger.info("LicenseServiceController Correlation id: {}",
-                UserContextHolder.getContext().getCorrelationId());
         return licenseService.getLicensesByOrganization(organizationId);
     }
 }
