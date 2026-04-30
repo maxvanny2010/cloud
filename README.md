@@ -1,14 +1,16 @@
 # Cloud Microservices Platform
 
-A production-grade microservices platform built with Spring Boot 3.4, deployed on a Hetzner VPS with full CI/CD automation via GitHub Actions.
+A production-grade microservices platform built with Spring Boot 3.4, deployed on a Hetzner VPS with full CI/CD
+automation via GitHub Actions.
 
-[![Live](https://img.shields.io/badge/LIVE-www.maxvanny.dev-6496ff?style=for-the-badge&labelColor=00a050)](https://maxvanny.dev)
+[![Live](https://img.shields.io/badge/LIVE-maxvanny.dev-6496ff?style=for-the-badge&labelColor=00a050)](https://maxvanny.dev)
 
 ---
 
 ## Quick Start
 
-No build required. All Docker images are public and hosted on GitHub Container Registry. The only requirement is Docker with Docker Compose installed.
+No build required. All Docker images are public and hosted on GitHub Container Registry. The only requirement is Docker
+with Docker Compose installed.
 
 ```bash
 git clone https://github.com/maxvanny2010/cloud.git
@@ -16,7 +18,8 @@ cd cloud/docker
 docker compose up
 ```
 
-Docker will pull all images automatically and start every service in the correct order. The startup takes approximately 60 seconds because services wait for each other to become healthy before starting.
+Docker will pull all images automatically and start every service in the correct order. The startup takes approximately
+60 seconds because services wait for each other to become healthy before starting.
 
 Once everything is up, open [http://localhost:3000](http://localhost:3000) in your browser.
 
@@ -45,6 +48,7 @@ docker compose down -v
 | Dashboard        | http://localhost:3000                    |
 | Gateway          | http://localhost:8072                    |
 | Eureka UI        | http://localhost:8070                    |
+| Jaeger UI        | http://localhost:16686                   |
 | Config Server    | http://localhost:8071                    |
 | License API      | http://localhost:8072/api/licenses/      |
 | Organization API | http://localhost:8072/api/organizations/ |
@@ -53,7 +57,10 @@ docker compose down -v
 
 ## Overview
 
-This project implements a distributed microservices architecture with centralized configuration, service discovery, API gateway routing, and a real-time Next.js dashboard. All services are containerized, built automatically on every push to master, and deployed to a cloud server without any manual intervention.
+This project implements a distributed microservices architecture with centralized configuration, service discovery, API
+gateway routing, real-time Next.js dashboard, and distributed tracing via OpenTelemetry and Jaeger. All services are
+containerized, built automatically on every push to master, and deployed to a cloud server without any manual
+intervention.
 
 ---
 
@@ -65,10 +72,11 @@ Browser
    v
 nginx (HTTPS / maxvanny.dev)
    |
-   +-- :3000  cloud-dashboard  (Next.js 15, SSR)
-   |
-   +-- :8072  gateway          (Spring Cloud Gateway)
-                  |
+   +-- /          -> cloud-dashboard  :3000  (Next.js 15, SSR)
+   +-- /api/      -> gateway          :8072  (Spring Cloud Gateway)
+   +-- /jaeger/   -> Jaeger UI        :16686 (Distributed Tracing)
+   +-- /eureka/   -> Eureka UI        :8070  (Service Registry)
+                         |
                   +-- lb://LICENSE       -> licensing-service  :8080
                   +-- lb://ORGANIZATION  -> organization-service :8080
                   |
@@ -79,6 +87,7 @@ Service Discovery: Eureka
 Configuration:     Config Server (native classpath + optional Git)
 Database:          PostgreSQL 16
 Migrations:        Liquibase
+Tracing:           OpenTelemetry + Jaeger
 ```
 
 ---
@@ -87,17 +96,21 @@ Migrations:        Liquibase
 
 ### configserver
 
-Spring Cloud Config Server. Serves externalized configuration to all services at startup. Supports native classpath profiles and optional Git backend. Runs on port 8071.
+Spring Cloud Config Server. Serves externalized configuration to all services at startup. Supports native classpath
+profiles and optional Git backend. Runs on port 8071.
 
-Configuration is profile-aware: each service loads a base properties file and a profile-specific override (`license.properties` + `license-prod.properties`).
+Configuration is profile-aware: each service loads a base properties file and a profile-specific override (
+`license.properties` + `license-prod.properties`).
 
 ### eurekaserver
 
-Netflix Eureka service registry. All microservices register themselves on startup. The gateway uses Eureka for load-balanced routing via `lb://` URIs. Runs on port 8070.
+Netflix Eureka service registry. All microservices register themselves on startup. The gateway uses Eureka for
+load-balanced routing via `lb://` URIs. Runs on port 8070.
 
 ### gateway
 
-Spring Cloud Gateway. Single entry point for all API traffic. Routes requests to downstream services by path prefix, rewrites paths, and exposes health endpoints for each registered service. Runs on port 8072.
+Spring Cloud Gateway. Single entry point for all API traffic. Routes requests to downstream services by path prefix,
+rewrites paths, and exposes health endpoints for each registered service. Runs on port 8072.
 
 Routes:
 
@@ -112,15 +125,26 @@ Routes:
 
 ### licensing-service
 
-Manages software licenses per organization. Each license belongs to an organization identified by UUID. Exposes a REST API with full CRUD. Uses Liquibase for schema management against PostgreSQL. Runs on port 8080.
+Manages software licenses per organization. Each license belongs to an organization identified by UUID. Exposes a REST
+API with full CRUD. Uses Liquibase for schema management against PostgreSQL. Runs on port 8080.
+
+Resilience patterns: CircuitBreaker, RateLimiter, Retry, Bulkhead via Resilience4j.
 
 ### organization-service
 
-Manages organizations with contact information. Each organization can have multiple licenses. Exposes a REST API. Uses Liquibase for schema management. Runs on port 8080 internally, mapped to 8081 externally.
+Manages organizations with contact information. Each organization can have multiple licenses. Exposes a REST API. Uses
+Liquibase for schema management. Runs on port 8080 internally, mapped to 8081 externally.
 
 ### cloud-dashboard
 
-Next.js 15 frontend with server-side rendering. Displays live health status of all services, lists organizations and licenses from the database, and shows the Eureka service registry. All data fetching uses `"use server"` actions with `cache: "no-store"` for real-time updates. Runs on port 3000.
+Next.js 15 frontend with server-side rendering. Displays live health status of all services, lists organizations and
+licenses from the database, shows the Eureka service registry, and links to Jaeger for distributed tracing. All data
+fetching uses `"use server"` actions with `cache: "no-store"` for real-time updates. Runs on port 3000.
+
+### jaeger
+
+Jaeger all-in-one distributed tracing backend. Receives traces from all services via OpenTelemetry OTLP protocol and
+provides a UI for visualizing request flows across microservices. Runs on port 16686 (UI) and 4318 (OTLP HTTP).
 
 ---
 
@@ -134,6 +158,8 @@ Next.js 15 frontend with server-side rendering. Displays live health status of a
 | Configuration      | Spring Cloud Config Server                  |
 | Database           | PostgreSQL 16                               |
 | Migrations         | Liquibase                                   |
+| Resilience         | Resilience4j (CircuitBreaker, Retry, etc.)  |
+| Tracing            | OpenTelemetry + Jaeger                      |
 | Frontend           | Next.js 15, TypeScript, React 19            |
 | Containerization   | Docker, Docker Compose                      |
 | CI/CD              | GitHub Actions                              |
@@ -141,6 +167,21 @@ Next.js 15 frontend with server-side rendering. Displays live health status of a
 | Server             | Hetzner VPS, Ubuntu 24.04                   |
 | Reverse Proxy      | nginx                                       |
 | SSL                | Let's Encrypt (certbot)                     |
+
+---
+
+## Distributed Tracing
+
+All services are instrumented with OpenTelemetry via Micrometer Tracing. Every request that enters through the gateway
+receives a trace ID that is propagated automatically to all downstream services using the W3C `traceparent` header.
+
+Traces are exported via OTLP HTTP protocol to Jaeger where they can be visualized as waterfall diagrams showing the full
+request path across services with timing for each step.
+
+Jaeger UI is available at [https://maxvanny.dev/jaeger/](https://maxvanny.dev/jaeger/).
+
+Sampling is set to 100% (`probability: 1.0`) for full visibility. In production with high traffic this should be reduced
+to 10% or lower.
 
 ---
 
@@ -180,7 +221,8 @@ docker compose pull && docker compose up -d
 
 ## Configuration
 
-Service configuration is managed centrally by the Config Server. Properties files are located in `configserver/src/main/resources/config/`.
+Service configuration is managed centrally by the Config Server. Properties files are located in
+`configserver/src/main/resources/config/`.
 
 | File                           | Purpose                                                       |
 |--------------------------------|---------------------------------------------------------------|
