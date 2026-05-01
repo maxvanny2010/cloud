@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: gateway
+    static_configs:
+      - targets: [ 'gateway:8072' ]
+    metrics_path: /actuator/prometheus
+
+  - job_name: license
+    static_configs:
+      - targets: [ 'license:8080' ]
+    metrics_path: /actuator/prometheus
+
+  - job_name: organization
+    static_configs:
+      - targets: [ 'organization:8080' ]
+    metrics_path: /actuator/prometheus

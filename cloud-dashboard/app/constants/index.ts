@@ -2,6 +2,44 @@ import type {ServiceConfig} from "../types";
 
 const GATEWAY = process.env.GATEWAY_URL ?? "http://gateway:8072";
 
+export const DEV_TOOLS_STYLES = {
+    container: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "4px 12px",
+        borderRadius: 6,
+        border: "1px solid rgba(255,255,255,0.04)",
+        backgroundColor: "rgba(255,255,255,0.02)",
+    },
+    label: {
+        fontSize: 9,
+        fontFamily: "monospace",
+        color: "#2a2a4a",
+        letterSpacing: 1,
+        textTransform: "uppercase" as const,
+    },
+} as const;
+
+export const DEV_TOOLS_LINKS = [
+    {
+        key: "jaeger",
+        label: "jaeger",
+        title: "Distributed Tracing",
+        hoverColor: "#00ff88",
+        hoverBorder: "rgba(0,255,136,0.4)",
+        hoverGlow: "rgba(0,255,136,0.2)",
+    },
+    {
+        key: "grafana",
+        label: "grafana",
+        title: "Metrics & Monitoring",
+        hoverColor: "#ff9900",
+        hoverBorder: "rgba(255,153,0,0.4)",
+        hoverGlow: "rgba(255,153,0,0.2)",
+    },
+] as const;
+
 export const API = {
     licenses: `${GATEWAY}/api/licenses`,
     organizations: `${GATEWAY}/api/organizations`,

@@ -70,10 +70,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,gateway,prometheus
   endpoint:
     gateway:
       access: read-only
+    prometheus:
+      enabled: true
   tracing:
     sampling:
       probability: 1.0

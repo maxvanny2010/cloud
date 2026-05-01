@@ -1,8 +1,6 @@
 "use client";
 import {SERVICES} from "@/app/constants";
-import JaegerLink from "@/app/components/JaerLink";
 import PortBadge from "@/app/components/PortBadge";
-import EurekaLink from "@/app/components/EurekaLink";
 
 export default function DashboardFooter() {
     return (
@@ -19,7 +17,6 @@ export default function DashboardFooter() {
                 © 2026 Cloud Dashboard · github.com/maxvanny2010
             </a>
             <div style={{display: "flex", gap: 8, alignItems: "center"}}>
-                <JaegerLink/>
                 {SERVICES.map((s) => (
                     <PortBadge key={s.port} service={s}/>
                 ))}
