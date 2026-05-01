@@ -4,6 +4,23 @@ A production-grade microservices platform built with Spring Boot 3.4, deployed o
 automation via GitHub Actions.
 
 [![Live](https://img.shields.io/badge/LIVE-maxvanny.dev-6496ff?style=for-the-badge&labelColor=00a050)](https://maxvanny.dev)
+[![Jaeger](https://img.shields.io/badge/Tracing-Jaeger-ff6600?style=for-the-badge&labelColor=333)](https://maxvanny.dev/jaeger/)
+[![Grafana](https://img.shields.io/badge/Metrics-Grafana-F46800?style=for-the-badge&labelColor=333)](https://maxvanny.dev/grafana/)
+
+---
+
+## Live Demo
+
+| Service   | URL                           | Credentials       |
+|-----------|-------------------------------|-------------------|
+| Dashboard | https://maxvanny.dev          | —                 |
+| Grafana   | https://maxvanny.dev/grafana/ | `admin` / `admin` |
+| Jaeger UI | https://maxvanny.dev/jaeger/  | —                 |
+| Eureka UI | https://maxvanny.dev/eureka/  | —                 |
+
+---
+
+## Quick Start
 
 ---
 
@@ -49,6 +66,8 @@ docker compose down -v
 | Gateway          | http://localhost:8072                    |
 | Eureka UI        | http://localhost:8070                    |
 | Jaeger UI        | http://localhost:16686                   |
+| Grafana          | http://localhost:3001/grafana/           |
+| Prometheus       | http://localhost:9090                    |
 | Config Server    | http://localhost:8071                    |
 | License API      | http://localhost:8072/api/licenses/      |
 | Organization API | http://localhost:8072/api/organizations/ |
@@ -58,9 +77,9 @@ docker compose down -v
 ## Overview
 
 This project implements a distributed microservices architecture with centralized configuration, service discovery, API
-gateway routing, real-time Next.js dashboard, and distributed tracing via OpenTelemetry and Jaeger. All services are
-containerized, built automatically on every push to master, and deployed to a cloud server without any manual
-intervention.
+gateway routing, real-time Next.js dashboard, distributed tracing via OpenTelemetry and Jaeger, and metrics monitoring
+via Prometheus and Grafana. All services are containerized, built automatically on every push to master, and deployed
+to a cloud server without any manual intervention.
 
 ---
 
@@ -72,22 +91,24 @@ Browser
    v
 nginx (HTTPS / maxvanny.dev)
    |
-   +-- /          -> cloud-dashboard  :3000  (Next.js 15, SSR)
-   +-- /api/      -> gateway          :8072  (Spring Cloud Gateway)
-   +-- /jaeger/   -> Jaeger UI        :16686 (Distributed Tracing)
-   +-- /eureka/   -> Eureka UI        :8070  (Service Registry)
-                         |
-                  +-- lb://LICENSE       -> licensing-service  :8080
-                  +-- lb://ORGANIZATION  -> organization-service :8080
-                  |
-                  +-- /api/health/eureka    -> eurekaserver  :8070
-                  +-- /api/health/config    -> configserver  :8071
+   +-- /           -> cloud-dashboard  :3000  (Next.js 15, SSR)
+   +-- /api/       -> gateway          :8072  (Spring Cloud Gateway)
+   +-- /jaeger/    -> Jaeger UI        :16686 (Distributed Tracing)
+   +-- /eureka/    -> Eureka UI        :8070  (Service Registry)
+   +-- /grafana/   -> Grafana          :3001  (Metrics Dashboards)
+                          |
+                   +-- lb://LICENSE       -> licensing-service    :8080
+                   +-- lb://ORGANIZATION  -> organization-service :8080
+                   |
+                   +-- /api/health/eureka    -> eurekaserver  :8070
+                   +-- /api/health/config    -> configserver  :8071
 
 Service Discovery: Eureka
 Configuration:     Config Server (native classpath + optional Git)
 Database:          PostgreSQL 16
 Migrations:        Liquibase
 Tracing:           OpenTelemetry + Jaeger
+Metrics:           Prometheus + Grafana
 ```
 
 ---
@@ -146,6 +167,17 @@ fetching uses `"use server"` actions with `cache: "no-store"` for real-time upda
 Jaeger all-in-one distributed tracing backend. Receives traces from all services via OpenTelemetry OTLP protocol and
 provides a UI for visualizing request flows across microservices. Runs on port 16686 (UI) and 4318 (OTLP HTTP).
 
+### prometheus
+
+Prometheus metrics collection server. Scrapes `/actuator/prometheus` endpoints from all Spring Boot services every 5
+seconds. Stores time-series data with a 7-day retention window. Runs on port 9090.
+
+### grafana
+
+Grafana metrics visualization. Connected to Prometheus as a data source. Ships with the Spring Boot 3.x Statistics
+dashboard (ID 19004) showing JVM memory, CPU usage, HTTP request rates, HikariCP connection pool, and GC statistics.
+Runs on port 3001, accessible at `/grafana/` via nginx subpath routing. Runs on port 3001.
+
 ---
 
 ## Tech Stack
@@ -160,6 +192,8 @@ provides a UI for visualizing request flows across microservices. Runs on port 1
 | Migrations         | Liquibase                                   |
 | Resilience         | Resilience4j (CircuitBreaker, Retry, etc.)  |
 | Tracing            | OpenTelemetry + Jaeger                      |
+| Metrics Collection | Prometheus                                  |
+| Metrics Dashboards | Grafana                                     |
 | Frontend           | Next.js 15, TypeScript, React 19            |
 | Containerization   | Docker, Docker Compose                      |
 | CI/CD              | GitHub Actions                              |
@@ -182,6 +216,44 @@ Jaeger UI is available at [https://maxvanny.dev/jaeger/](https://maxvanny.dev/ja
 
 Sampling is set to 100% (`probability: 1.0`) for full visibility. In production with high traffic this should be reduced
 to 10% or lower.
+
+---
+
+## Metrics & Monitoring
+
+All services expose metrics via Spring Boot Actuator in Prometheus format at `/actuator/prometheus`. Prometheus scrapes
+all services on a 5-second interval. Grafana connects to Prometheus as a data source and provides dashboards for
+visualizing JVM memory, HTTP request rates, circuit breaker states, and HikariCP connection pool usage.
+
+Grafana is available at [https://maxvanny.dev/grafana/](https://maxvanny.dev/grafana/).
+
+| Credential | Value   |
+|------------|---------|
+| Username   | `admin` |
+| Password   | `admin` |
+
+Prometheus scrape configuration (`docker/prometheus.yaml`):
+
+```yaml
+scrape_configs:
+  - job_name: gateway
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'gateway:8072' ]
+
+  - job_name: license
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'license:8080' ]
+
+  - job_name: organization
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'organization:8080' ]
+```
+
+Dashboard in use: **Spring Boot 3.x Statistics** (Grafana ID `19004`). To import manually:
+Dashboards → New → Import → enter `19004` → select Prometheus datasource → Import.
 
 ---
 
@@ -283,7 +355,7 @@ cloud/
   licensing-service/     License management microservice
   organization-service/  Organization management microservice
   cloud-dashboard/       Next.js real-time dashboard
-  docker/                docker-compose.yaml, init.sql, data.sql
+  docker/                docker-compose.yaml, prometheus.yaml, init.sql, data.sql
   .github/workflows/     CI/CD pipeline (ci.yml)
   pom.xml                Root Maven POM (monorepo)
 ```
