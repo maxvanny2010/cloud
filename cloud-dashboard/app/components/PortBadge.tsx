@@ -6,7 +6,7 @@ export default function PortBadge({service}: { service: typeof SERVICES[number] 
     return (
         <NavLink
             href={url}
-            label={`:${service.port}`}
+            label={`${service.name} :${service.port}`}
             title={`${service.name} · ${service.description}`}
         />
     );

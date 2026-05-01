@@ -15,7 +15,7 @@ export default function NavLink({
                                     href,
                                     label,
                                     title,
-                                    color = "#2a2a44",
+                                    color = "#6060a0",
                                     hoverColor = "#a090ff",
                                     hoverBorder = "rgba(100,80,255,0.4)",
                                     hoverGlow = "rgba(100,80,255,0.2)"
@@ -38,7 +38,7 @@ export default function NavLink({
                 textDecoration: "none",
                 transition: "color 0.15s, border-color 0.15s, box-shadow 0.15s",
                 color: hovered ? hoverColor : color,
-                border: `1px solid ${hovered ? hoverBorder : "#1a1a33"}`,
+                border: `1px solid ${hovered ? hoverBorder : "rgba(100,100,180,0.25)"}`,
                 boxShadow: hovered ? `0 0 8px ${hoverGlow}` : "none",
                 cursor: "pointer",
             }}
