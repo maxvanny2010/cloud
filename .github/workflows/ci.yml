@@ -45,6 +45,35 @@ jobs:
             dashboard:
               - 'cloud-dashboard/**'
 
+  test-licensing:
+    name: Test licensing-service
+    needs: changes
+    if: needs.changes.outputs.licensing == 'true' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      - name: Run tests
+        run: mvn -f licensing-service/pom.xml test
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: licensing-service/target/surefire-reports/
+          retention-days: 7
+
+  # ── Build & push ────────────────────────────────────────────────────────────
+
   build-configserver:
     name: configserver
     needs: changes
@@ -127,7 +156,7 @@ jobs:
 
   build-licensing:
     name: licensing-service
-    needs: changes
+    needs: [ changes, test-licensing ]
     if: needs.changes.outputs.licensing == 'true' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:

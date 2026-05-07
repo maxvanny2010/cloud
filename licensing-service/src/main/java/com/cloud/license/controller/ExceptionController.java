@@ -4,6 +4,7 @@ import com.cloud.license.model.util.ErrorMessage;
 import com.cloud.license.model.util.ResponseWrapper;
 import com.cloud.license.model.util.RestErrorList;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -30,7 +31,7 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
     public @ResponseBody ResponseEntity<ResponseWrapper> handleException(
             HttpServletRequest request, Exception e) {
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR) // ← 500
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ResponseWrapper(null, null, null));
     }
 
@@ -44,8 +45,15 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
         ResponseWrapper responseWrapper = new ResponseWrapper(
                 null, singletonMap("status", HttpStatus.NOT_ACCEPTABLE), errorList);
         return ResponseEntity
-                .status(HttpStatus.NOT_ACCEPTABLE) // ← 406 вместо 200
+                .status(HttpStatus.NOT_ACCEPTABLE)
                 .body(responseWrapper);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @SuppressWarnings("unused")
+    public @ResponseBody ResponseEntity<String> handleConstraintViolation(
+            HttpServletRequest request, ConstraintViolationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 
 }
