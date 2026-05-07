@@ -1,0 +1,49 @@
+# NOTE: This configuration requires LocalStack Pro or real AWS account.
+# ECS and ALB are not available in LocalStack free tier.
+# Files are included for reference and real AWS deployment.
+resource "aws_lb" "main" {
+  name               = "${var.app_name}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+  tags               = { Name = "${var.app_name}-alb" }
+}
+
+# Target group → Gateway (единственная точка входа)
+resource "aws_lb_target_group" "gateway" {
+  name        = "${var.app_name}-gateway-tg"
+  port        = 8072
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/actuator/health"
+    port                = "8072"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    interval            = 30
+    timeout             = 10
+  }
+
+  tags = { Name = "${var.app_name}-gateway-tg" }
+}
+
+# Listener: весь HTTP трафик → Gateway
+# На реальном AWS здесь был бы HTTPS с ACM сертификатом
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.gateway.arn
+  }
+}
+
+output "alb_dns" {
+  value       = aws_lb.main.dns_name
+  description = "DNS имя ALB — сюда направить maxvanny.dev"
+}

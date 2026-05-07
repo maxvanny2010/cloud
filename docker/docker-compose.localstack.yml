@@ -1,0 +1,39 @@
+services:
+  localstack:
+    image: localstack/localstack:3.4
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=iam,logs,sts,ec2,cloudwatch
+      # ecs,elbv2,servicediscovery — require LocalStack Pro
+      - DEFAULT_REGION=eu-west-1
+      - LOCALSTACK_HOST=localhost
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "localstack_data:/var/lib/localstack"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4566/_localstack/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  terraform:
+    image: hashicorp/terraform:latest
+    working_dir: /terraform
+    volumes:
+      - ../terraform-localstack:/terraform
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=eu-west-1
+    depends_on:
+      localstack:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "terraform init && terraform apply -auto-approve"
+    network_mode: host
+
+volumes:
+  localstack_data:

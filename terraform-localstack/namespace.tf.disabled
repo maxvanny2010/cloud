@@ -1,0 +1,68 @@
+# NOTE: This configuration requires LocalStack Pro or real AWS account.
+# ECS and ALB are not available in LocalStack free tier.
+# Files are included for reference and real AWS deployment.
+resource "aws_service_discovery_private_dns_namespace" "main" {
+  name = "maxvanny.local"
+  vpc  = aws_vpc.main.id
+  tags = { Name = "maxvanny.local" }
+}
+
+resource "aws_service_discovery_service" "configserver" {
+  name = "configserver"
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.main.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+  }
+}
+
+resource "aws_service_discovery_service" "eureka" {
+  name = "eureka"
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.main.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+  }
+}
+
+resource "aws_service_discovery_service" "license" {
+  name = "license"
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.main.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+  }
+}
+
+resource "aws_service_discovery_service" "organization" {
+  name = "organization"
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.main.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+  }
+}
+
+resource "aws_service_discovery_service" "gateway" {
+  name = "gateway"
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.main.id
+    routing_policy = "MULTIVALUE"
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+  }
+}

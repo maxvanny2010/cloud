@@ -1,0 +1,313 @@
+# NOTE: This configuration requires LocalStack Pro or real AWS account.
+# ECS and ALB are not available in LocalStack free tier.
+# Files are included for reference and real AWS deployment.
+resource "aws_ecs_cluster" "main" {
+  name = "${var.app_name}-cluster"
+  tags = { Name = "${var.app_name}-cluster" }
+}
+
+# ─────────────────────────────────────────────────────────
+# 1. CONFIG SERVER (порт 8071)
+# Стартует первым — остальные сервисы зависят от него
+# ─────────────────────────────────────────────────────────
+resource "aws_ecs_task_definition" "configserver" {
+  family                   = "${var.app_name}-configserver"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([{
+    name  = "configserver"
+    image = "ghcr.io/${var.image_owner}/configserver:latest"
+    portMappings = [{ containerPort = 8071, protocol = "tcp" }]
+    environment = [
+      { name = "SPRING_PROFILES_ACTIVE", value = "native" },
+      { name = "ENCRYPT_KEY",            value = "secretkey" }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = "/ecs/${var.app_name}/configserver"
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
+resource "aws_cloudwatch_log_group" "configserver" {
+  name              = "/ecs/${var.app_name}/configserver"
+  retention_in_days = 7
+}
+
+resource "aws_ecs_service" "configserver" {
+  name            = "${var.app_name}-configserver"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.configserver.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = true
+  }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.configserver.arn
+  }
+}
+
+# ─────────────────────────────────────────────────────────
+# 2. EUREKA SERVER (порт 8070)
+# Подключается к Config Server по DNS
+# ─────────────────────────────────────────────────────────
+resource "aws_ecs_task_definition" "eureka" {
+  family                   = "${var.app_name}-eureka"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([{
+    name  = "eureka"
+    image = "ghcr.io/${var.image_owner}/eureka:latest"
+    portMappings = [{ containerPort = 8070, protocol = "tcp" }]
+    environment = [
+      # Cloud Map даёт стабильный DNS: configserver.maxvanny.local
+      { name = "SPRING_CONFIG_IMPORT",    value = "optional:configserver:http://configserver.${var.app_name}.local:8071" },
+      { name = "SPRING_PROFILES_ACTIVE",  value = "prod" }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = "/ecs/${var.app_name}/eureka"
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
+resource "aws_cloudwatch_log_group" "eureka" {
+  name              = "/ecs/${var.app_name}/eureka"
+  retention_in_days = 7
+}
+
+resource "aws_ecs_service" "eureka" {
+  name            = "${var.app_name}-eureka"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.eureka.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = true
+  }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.eureka.arn
+  }
+}
+
+# ─────────────────────────────────────────────────────────
+# 3. LICENSE SERVICE (порт 8080)
+# Eureka URL → eureka.maxvanny.local:8070
+# Config URL → configserver.maxvanny.local:8071
+# DB         → RDS или внешний PostgreSQL
+# ─────────────────────────────────────────────────────────
+resource "aws_ecs_task_definition" "license" {
+  family                   = "${var.app_name}-license"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 512
+  memory                   = 1024
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([{
+    name  = "license"
+    image = "ghcr.io/${var.image_owner}/license:latest"
+    portMappings = [{ containerPort = 8080, protocol = "tcp" }]
+    environment = [
+      { name = "SPRING_PROFILES_ACTIVE",   value = "prod" },
+      { name = "SPRING_CONFIG_IMPORT",     value = "optional:configserver:http://configserver.${var.app_name}.local:8071" },
+      { name = "CONFIGSERVER_URI",         value = "http://configserver.${var.app_name}.local:8071" },
+      # Eureka регистрация через Cloud Map DNS
+      { name = "EUREKA_CLIENT_SERVICEURL_DEFAULTZONE", value = "http://eureka.${var.app_name}.local:8070/eureka/" },
+      { name = "EUREKA_INSTANCE_PREFER_IP_ADDRESS",    value = "true" },
+      # PostgreSQL — замени на реальный адрес БД
+      { name = "SPRING_DATASOURCE_URL",      value = "jdbc:postgresql://database:5432/cloude" },
+      { name = "SPRING_DATASOURCE_USERNAME", value = "postgres" },
+      { name = "SPRING_DATASOURCE_PASSWORD", value = "user" },
+      # Jaeger tracing
+      { name = "MANAGEMENT_OTLP_TRACING_ENDPOINT", value = "http://jaeger.${var.app_name}.local:4318/v1/traces" }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = "/ecs/${var.app_name}/license"
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
+resource "aws_cloudwatch_log_group" "license" {
+  name              = "/ecs/${var.app_name}/license"
+  retention_in_days = 7
+}
+
+resource "aws_ecs_service" "license" {
+  name            = "${var.app_name}-license"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.license.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = true
+  }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.license.arn
+  }
+}
+
+# ─────────────────────────────────────────────────────────
+# 4. ORGANIZATION SERVICE (порт 8080)
+# ─────────────────────────────────────────────────────────
+resource "aws_ecs_task_definition" "organization" {
+  family                   = "${var.app_name}-organization"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 512
+  memory                   = 1024
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([{
+    name  = "organization"
+    image = "ghcr.io/${var.image_owner}/organization:latest"
+    portMappings = [{ containerPort = 8080, protocol = "tcp" }]
+    environment = [
+      { name = "SPRING_PROFILES_ACTIVE",   value = "prod" },
+      { name = "SPRING_CONFIG_IMPORT",     value = "optional:configserver:http://configserver.${var.app_name}.local:8071" },
+      { name = "CONFIGSERVER_URI",         value = "http://configserver.${var.app_name}.local:8071" },
+      { name = "EUREKA_CLIENT_SERVICEURL_DEFAULTZONE", value = "http://eureka.${var.app_name}.local:8070/eureka/" },
+      { name = "EUREKA_INSTANCE_PREFER_IP_ADDRESS",    value = "true" },
+      { name = "SPRING_DATASOURCE_URL",      value = "jdbc:postgresql://database:5432/cloude" },
+      { name = "SPRING_DATASOURCE_USERNAME", value = "postgres" },
+      { name = "SPRING_DATASOURCE_PASSWORD", value = "user" },
+      { name = "MANAGEMENT_OTLP_TRACING_ENDPOINT", value = "http://jaeger.${var.app_name}.local:4318/v1/traces" }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = "/ecs/${var.app_name}/organization"
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
+resource "aws_cloudwatch_log_group" "organization" {
+  name              = "/ecs/${var.app_name}/organization"
+  retention_in_days = 7
+}
+
+resource "aws_ecs_service" "organization" {
+  name            = "${var.app_name}-organization"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.organization.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = true
+  }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.organization.arn
+  }
+}
+
+# ─────────────────────────────────────────────────────────
+# 5. GATEWAY (порт 8072) — единственный подключён к ALB
+# Роутит через Eureka: lb://LICENSE, lb://ORGANIZATION
+# ─────────────────────────────────────────────────────────
+resource "aws_ecs_task_definition" "gateway" {
+  family                   = "${var.app_name}-gateway"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 512
+  memory                   = 1024
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([{
+    name  = "gateway"
+    image = "ghcr.io/${var.image_owner}/gateway:latest"
+    portMappings = [{ containerPort = 8072, protocol = "tcp" }]
+    environment = [
+      { name = "SPRING_PROFILES_ACTIVE",  value = "prod" },
+      { name = "SPRING_CONFIG_IMPORT",    value = "optional:configserver:http://configserver.${var.app_name}.local:8071" },
+      { name = "CONFIGSERVER_URI",        value = "http://configserver.${var.app_name}.local:8071" },
+      # Gateway использует Eureka для lb://LICENSE и lb://ORGANIZATION
+      { name = "EUREKA_CLIENT_SERVICEURL_DEFAULTZONE", value = "http://eureka.${var.app_name}.local:8070/eureka/" },
+      { name = "EUREKA_INSTANCE_PREFER_IP_ADDRESS",    value = "true" },
+      # health роуты на eureka и config через Cloud Map DNS
+      { name = "EUREKA_URI",     value = "http://eureka.${var.app_name}.local:8070" },
+      { name = "CONFIGSERVER_URI", value = "http://configserver.${var.app_name}.local:8071" },
+      { name = "MANAGEMENT_OTLP_TRACING_ENDPOINT", value = "http://jaeger.${var.app_name}.local:4318/v1/traces" }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = "/ecs/${var.app_name}/gateway"
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
+resource "aws_cloudwatch_log_group" "gateway" {
+  name              = "/ecs/${var.app_name}/gateway"
+  retention_in_days = 7
+}
+
+resource "aws_ecs_service" "gateway" {
+  name            = "${var.app_name}-gateway"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.gateway.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = true
+  }
+
+  # Только Gateway подключён к ALB
+  load_balancer {
+    target_group_arn = aws_lb_target_group.gateway.arn
+    container_name   = "gateway"
+    container_port   = 8072
+  }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.gateway.arn
+  }
+
+  depends_on = [aws_lb_listener.http]
+}
