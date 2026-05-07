@@ -197,6 +197,7 @@ Runs on port 3001, accessible at `/grafana/` via nginx subpath routing.
 | Server             | Hetzner VPS, Ubuntu 24.04                   |
 | Reverse Proxy      | nginx                                       |
 | SSL                | Let's Encrypt (certbot)                     |
+| IaC                | Terraform                                   |
 
 ---
 
@@ -240,7 +241,7 @@ scrape_configs:
   - job_name: license
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: [ 'license:8080' ]
+      - targets: [ 'license:8080' ] ]
 
   - job_name: organization
     metrics_path: /actuator/prometheus
@@ -327,6 +328,197 @@ docker compose pull && docker compose up -d
 
 ---
 
+## AWS Migration (Terraform)
+
+The `terraform-localstack/` directory contains a complete Infrastructure as Code configuration for migrating this
+platform to AWS ECS.
+
+### What is included
+
+| File                    | Description                                  | Status           |
+|-------------------------|----------------------------------------------|------------------|
+| `main.tf`               | AWS provider configuration                   | ✓ Free tier      |
+| `vpc.tf`                | VPC, subnets, internet gateway, route tables | ✓ Free tier      |
+| `security.tf`           | Security groups for ALB and ECS              | ✓ Free tier      |
+| `iam.tf`                | ECS task execution role                      | ✓ Free tier      |
+| `variables.tf`          | Input variables                              | ✓ Free tier      |
+| `ecs.tf.disabled`       | ECS cluster, task definitions, services      | Requires AWS/Pro |
+| `alb.tf.disabled`       | Application Load Balancer, target group      | Requires AWS/Pro |
+| `namespace.tf.disabled` | AWS Cloud Map DNS for service discovery      | Requires AWS/Pro |
+
+### How to run locally with LocalStack
+
+Start LocalStack and apply Terraform automatically:
+
+```bash
+cd docker
+docker compose -f docker-compose.localstack.yml up
+```
+
+Stop:
+
+```bash
+docker compose -f docker-compose.localstack.yml down
+```
+
+Reset and start from scratch (clears all LocalStack data):
+
+```bash
+docker compose -f docker-compose.localstack.yml down -v
+docker compose -f docker-compose.localstack.yml up
+```
+
+After apply completes, verify created resources using AWS CLI.
+
+#### Install AWS CLI
+
+Windows:
+
+```powershell
+winget install Amazon.AWSCLI
+```
+
+Linux/Mac:
+
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip && sudo ./aws/install
+```
+
+#### Set fake credentials (LocalStack accepts any values)
+
+Windows (PowerShell):
+
+```powershell
+$env:AWS_ACCESS_KEY_ID="test"
+$env:AWS_SECRET_ACCESS_KEY="test"
+$env:AWS_DEFAULT_REGION="eu-west-1"
+```
+
+Linux/Mac:
+
+```bash
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_DEFAULT_REGION=eu-west-1
+```
+
+> These credentials are stored only in the current terminal session.
+> They are not saved to disk and are lost when you close the terminal.
+> LocalStack accepts any values — no real AWS account needed.
+
+#### Verify resources
+
+```bash
+# List VPCs
+aws --endpoint-url=http://localhost:4566 ec2 describe-vpcs \
+  --query "Vpcs[*].{ID:VpcId,CIDR:CidrBlock}" --output table
+```
+
+Expected output:
+
+```
+-----------------------------------
+|          DescribeVpcs           |
++----------------+----------------+
+|      CIDR      |      ID        |
++----------------+----------------+
+|  172.31.0.0/16 |  vpc-c335b727  |  <- LocalStack default VPC
+|  10.0.0.0/16   |  vpc-0180816e  |  <- maxvanny-vpc created by Terraform
++----------------+----------------+
+```
+
+```bash
+# List security groups
+aws --endpoint-url=http://localhost:4566 ec2 describe-security-groups \
+  --query "SecurityGroups[*].{Name:GroupName,ID:GroupId}" --output table
+```
+
+Expected output:
+
+```
+---------------------------------------------
+|          DescribeSecurityGroups           |
++-----------------------+-------------------+
+|          ID           |       Name        |
++-----------------------+-------------------+
+|  sg-...               |  default          |
+|  sg-5ffd60e65e2b875d7 |  maxvanny-alb-sg  |
+|  sg-de1c082bf2a6be7c2 |  maxvanny-ecs-sg  |
++-----------------------+-------------------+
+```
+
+```bash
+# List IAM roles
+aws --endpoint-url=http://localhost:4566 iam list-roles \
+  --query "Roles[*].{Name:RoleName}" --output table
+```
+
+Expected output:
+
+```
+---------------------------------
+|           ListRoles           |
++-------------------------------+
+|             Name              |
++-------------------------------+
+|  maxvanny-ecs-execution-role  |
++-------------------------------+
+```
+
+No need to install Terraform. Everything runs via Docker:
+
+```bash
+cd docker
+docker compose -f docker-compose.localstack.yml up
+```
+
+This starts LocalStack and applies Terraform automatically. The following resources are created in LocalStack free tier:
+
+```
+✓ VPC (10.0.0.0/16)
+✓ Public subnets in eu-west-1a and eu-west-1b (Multi-AZ)
+✓ Internet Gateway + Route Tables
+✓ Security Groups (ALB + ECS)
+✓ IAM execution role for ECS tasks
+✓ CloudWatch Log Groups for all services
+```
+
+ECS, ALB, and Cloud Map require LocalStack Pro or a real AWS account. The full `terraform plan` output shows
+36 resources ready to deploy on real AWS.
+
+### Architecture on AWS
+
+```
+Internet
+    ↓
+ALB (Application Load Balancer)     ← replaces Nginx
+    ↓
+ECS Fargate Cluster
+    ├── configserver  (port 8071)
+    ├── eureka        (port 8070)
+    ├── license       (port 8080)
+    ├── organization  (port 8080)
+    └── gateway       (port 8072)   ← only service connected to ALB
+
+Service Discovery: AWS Cloud Map    ← replaces Eureka in ECS
+  configserver.maxvanny.local:8071
+  eureka.maxvanny.local:8070
+  license.maxvanny.local:8080
+  organization.maxvanny.local:8080
+  gateway.maxvanny.local:8072
+
+Images: ghcr.io/maxvanny2010/<service>:latest
+```
+
+### CI/CD for AWS (prepared, commented out)
+
+The `.github/workflows/ci.yml` contains a commented-out `deploy-aws` job that uses OIDC authentication
+(no permanent AWS keys) to update ECS services on every push to master. To enable it, create an IAM role
+with OIDC trust for this repository and add `AWS_ROLE_ARN` to GitHub Secrets.
+
+---
+
 ## Configuration
 
 Service configuration is managed centrally by the Config Server. Properties files are located in
@@ -370,32 +562,6 @@ All services expose Spring Boot Actuator health endpoints.
 
 ---
 
-## GitHub Secrets Required
-
-To set up your own deployment, add the following secrets to a GitHub Environment named `hetzner`:
-
-| Secret        | Description                       |
-|---------------|-----------------------------------|
-| `VPS_IP`      | IP address of the target server   |
-| `VPS_SSH_KEY` | Private SSH key for server access |
-
----
-
-## Repository Structure
-
-```
-cloud/
-  configserver/          Spring Cloud Config Server
-  eurekaserver/          Netflix Eureka Server
-  gateway/               Spring Cloud Gateway
-  licensing-service/     License management microservice
-  organization-service/  Organization management microservice
-  cloud-dashboard/       Next.js real-time dashboard
-  docker/                docker-compose.yaml, prometheus.yaml, init.sql, data.sql
-  .github/workflows/     CI/CD pipeline (ci.yml)
-  pom.xml                Root Maven POM (monorepo)
-```
-
 ## Security
 
 The server is protected by a firewall (ufw) that allows only the following ports:
@@ -409,5 +575,40 @@ The server is protected by a firewall (ufw) that allows only the following ports
 All other ports are closed. Internal services communicate through the Docker bridge network
 and are accessible only via Nginx reverse proxy.
 
-PostgreSQL runs without an exposed port — it is accessible only
-within the Docker network by application services.
+PostgreSQL runs without an exposed port — it is accessible only within the Docker network by application services.
+
+---
+
+## GitHub Secrets Required
+
+To set up your own deployment, add the following secrets to a GitHub Environment named `hetzner`:
+
+| Secret        | Description                       |
+|---------------|-----------------------------------|
+| `VPS_IP`      | IP address of the target server   |
+| `VPS_SSH_KEY` | Private SSH key for server access |
+
+For AWS deployment (optional), add to a GitHub Environment named `aws`:
+
+| Secret         | Description                          |
+|----------------|--------------------------------------|
+| `AWS_ROLE_ARN` | IAM role ARN with OIDC trust for ECS |
+
+---
+
+## Repository Structure
+
+```
+cloud/
+  configserver/            Spring Cloud Config Server
+  eurekaserver/            Netflix Eureka Server
+  gateway/                 Spring Cloud Gateway
+  licensing-service/       License management microservice
+  organization-service/    Organization management microservice
+  cloud-dashboard/         Next.js real-time dashboard
+  docker/                  docker-compose.yaml, prometheus.yaml, init.sql, data.sql
+                           docker-compose.localstack.yml
+  terraform-localstack/    Terraform IaC for AWS ECS migration
+  .github/workflows/       CI/CD pipeline (ci.yml)
+  pom.xml                  Root Maven POM (monorepo)
+```
