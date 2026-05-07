@@ -22,10 +22,6 @@ automation via GitHub Actions.
 
 ## Quick Start
 
----
-
-## Quick Start
-
 No build required. All Docker images are public and hosted on GitHub Container Registry. The only requirement is Docker
 with Docker Compose installed.
 
@@ -176,7 +172,7 @@ seconds. Stores time-series data with a 7-day retention window. Runs on port 909
 
 Grafana metrics visualization. Connected to Prometheus as a data source. Ships with the Spring Boot 3.x Statistics
 dashboard (ID 19004) showing JVM memory, CPU usage, HTTP request rates, HikariCP connection pool, and GC statistics.
-Runs on port 3001, accessible at `/grafana/` via nginx subpath routing. Runs on port 3001.
+Runs on port 3001, accessible at `/grafana/` via nginx subpath routing.
 
 ---
 
@@ -257,17 +253,54 @@ Dashboards → New → Import → enter `19004` → select Prometheus datasource
 
 ---
 
+## Testing
+
+Licensing service has automated tests that run as part of the CI/CD pipeline before every build.
+
+### Test structure
+
+| Class                   | Type          | Description                              |
+|-------------------------|---------------|------------------------------------------|
+| `LicenseControllerTest` | `@WebMvcTest` | REST layer tests with MockMvc            |
+| `LicenseServiceTest`    | Unit tests    | Service logic tests with Mockito         |
+
+### What is tested
+
+`LicenseControllerTest` covers all CRUD endpoints:
+
+- `GET /v1/organization/{orgId}/license/{licId}` — returns 200 with license JSON
+- `GET /v1/organization/{orgId}/license/` — returns list of licenses
+- `POST /v1/organization/{orgId}/license` — creates license, returns 200
+- `PUT /v1/organization/{orgId}/license` — updates license, returns 200
+- `DELETE /v1/organization/{orgId}/license/{licId}` — returns 200 with message
+- Invalid UUID format — returns 400 via `GlobalExceptionHandler`
+
+`LicenseServiceTest` covers service logic for all client types: feign, rest, discovery, and default.
+
+### Run tests locally
+
+```bash
+mvn -f licensing-service/pom.xml test
+```
+
+Test reports are saved to `licensing-service/target/surefire-reports/`. In CI, reports are uploaded as GitHub Actions
+artifacts and kept for 7 days.
+
+---
+
 ## CI/CD Pipeline
 
 Every push to the `master` branch triggers the following automated sequence:
 
 1. GitHub Actions detects which services changed using path filters.
-2. Each changed service is built with Maven or npm.
-3. A Docker image is built and pushed to `ghcr.io/maxvanny2010/<service>:latest`.
-4. After all builds succeed, a deploy job SSHs into the Hetzner VPS.
-5. The server runs `docker compose pull` to fetch new images and `docker compose up -d` to restart updated containers.
+2. Tests run for changed services. Build is blocked if tests fail.
+3. Each changed service is built with Maven or npm.
+4. A Docker image is built and pushed to `ghcr.io/maxvanny2010/<service>:latest`.
+5. After all builds succeed, a deploy job SSHs into the Hetzner VPS.
+6. The server runs `docker compose pull` to fetch new images and `docker compose up -d` to restart updated containers.
 
-Pushes to `develop` trigger builds only, without deployment. Pull requests trigger builds only, without pushing images.
+Pushes to `develop` trigger builds only for changed services, without deployment. Pull requests trigger builds only,
+without pushing images.
 
 ```
 push to master
@@ -275,9 +308,12 @@ push to master
       v
 changes detection (dorny/paths-filter)
       |
+      +-- test-licensing (mvn test)
+      |         |
+      |         v (only if tests pass)
+      +-- build-licensing
       +-- build-configserver
       +-- build-eureka
-      +-- build-licensing
       +-- build-organization
       +-- build-gateway
       +-- build-dashboard
@@ -296,8 +332,8 @@ docker compose pull && docker compose up -d
 Service configuration is managed centrally by the Config Server. Properties files are located in
 `configserver/src/main/resources/config/`.
 
-| File                           | Purpose                                                       |
-|--------------------------------|---------------------------------------------------------------|
+| File                           | Purpose                                                        |
+|--------------------------------|----------------------------------------------------------------|
 | `license.properties`           | Base config for licensing-service (JPA, Eureka, resilience4j) |
 | `license-dev.properties`       | Dev datasource (local PostgreSQL)                             |
 | `license-prod.properties`      | Prod datasource (Docker PostgreSQL container)                 |
