@@ -259,10 +259,10 @@ Licensing service has automated tests that run as part of the CI/CD pipeline bef
 
 ### Test structure
 
-| Class                   | Type          | Description                              |
-|-------------------------|---------------|------------------------------------------|
-| `LicenseControllerTest` | `@WebMvcTest` | REST layer tests with MockMvc            |
-| `LicenseServiceTest`    | Unit tests    | Service logic tests with Mockito         |
+| Class                   | Type          | Description                      |
+|-------------------------|---------------|----------------------------------|
+| `LicenseControllerTest` | `@WebMvcTest` | REST layer tests with MockMvc    |
+| `LicenseServiceTest`    | Unit tests    | Service logic tests with Mockito |
 
 ### What is tested
 
@@ -332,8 +332,8 @@ docker compose pull && docker compose up -d
 Service configuration is managed centrally by the Config Server. Properties files are located in
 `configserver/src/main/resources/config/`.
 
-| File                           | Purpose                                                        |
-|--------------------------------|----------------------------------------------------------------|
+| File                           | Purpose                                                       |
+|--------------------------------|---------------------------------------------------------------|
 | `license.properties`           | Base config for licensing-service (JPA, Eureka, resilience4j) |
 | `license-dev.properties`       | Dev datasource (local PostgreSQL)                             |
 | `license-prod.properties`      | Prod datasource (Docker PostgreSQL container)                 |
@@ -395,3 +395,19 @@ cloud/
   .github/workflows/     CI/CD pipeline (ci.yml)
   pom.xml                Root Maven POM (monorepo)
 ```
+
+## Security
+
+The server is protected by a firewall (ufw) that allows only the following ports:
+
+| Port | Protocol | Description               |
+|------|----------|---------------------------|
+| 22   | TCP      | SSH access                |
+| 80   | TCP      | HTTP (redirects to HTTPS) |
+| 443  | TCP      | HTTPS (Nginx)             |
+
+All other ports are closed. Internal services communicate through the Docker bridge network
+and are accessible only via Nginx reverse proxy.
+
+PostgreSQL runs without an exposed port — it is accessible only
+within the Docker network by application services.
